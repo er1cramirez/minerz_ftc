@@ -70,12 +70,12 @@ public class DefaultDriveCommand extends CommandBase {
     public DefaultDriveCommand(DriveSubsystem driveSubsystem, GamepadEx gamepad) {
         this(
             driveSubsystem,
-            () -> -gamepad.getLeftY(),  // Inverted because stick up is negative
-            gamepad::getLeftX,
-            gamepad::getRightX,
-            () -> gamepad.getButton(IOConstants.Driver.PRECISION_MODE_BUTTON),
-            () -> gamepad.getButton(IOConstants.Driver.TURBO_MODE_BUTTON),
-            () -> DriveConstants.DriveMode.DEFAULT_FIELD_RELATIVE // Can be changed to toggle
+            () -> -gamepad.getLeftY(),
+            () -> gamepad.getLeftX(),
+            () -> gamepad.getRightX(),
+            () -> gamepad.getButton(OIConstants.Driver.PRECISION_MODE_BUTTON),
+            () -> gamepad.getButton(OIConstants.Driver.TURBO_MODE_BUTTON),
+            () -> DriveConstants.DriveMode.DEFAULT_FIELD_RELATIVE
         );
     }
 
