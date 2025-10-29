@@ -73,8 +73,8 @@ public class DefaultDriveCommand extends CommandBase {
             () -> -gamepad.getLeftY(),
             () -> gamepad.getLeftX(),
             () -> gamepad.getRightX(),
-            () -> gamepad.getButton(OIConstants.Driver.PRECISION_MODE_BUTTON),
-            () -> gamepad.getButton(OIConstants.Driver.TURBO_MODE_BUTTON),
+            () -> gamepad.getButton(IOConstants.Driver.PRECISION_MODE_BUTTON),
+            () -> gamepad.getButton(IOConstants.Driver.TURBO_MODE_BUTTON),
             () -> DriveConstants.DriveMode.DEFAULT_FIELD_RELATIVE
         );
     }
