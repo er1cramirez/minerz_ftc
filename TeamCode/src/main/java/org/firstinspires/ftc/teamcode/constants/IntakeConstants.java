@@ -17,8 +17,5 @@ public final class IntakeConstants {
         
         // Power when outtaking/ejecting game elements
         public static final double OUTTAKE_POWER = -1.0;
-        
-        // Power when stopped
-        public static final double STOP_POWER = 0.0;
     }
 }

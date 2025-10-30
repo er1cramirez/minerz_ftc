@@ -10,7 +10,6 @@ import java.util.function.DoubleSupplier;
 
 /**
  * Command for controlling the intake with triggers.
- * 
  * Control scheme:
  * - Right trigger: Intake (pull in game elements)
  * - Left trigger: Outtake (eject game elements)
@@ -24,7 +23,6 @@ public class IntakeCommand extends CommandBase {
 
     /**
      * Creates a new IntakeCommand.
-     * 
      * @param intakeSubsystem The intake subsystem to control
      * @param intakeTriggerSupplier Supplier for intake trigger value (right trigger)
      * @param outtakeTriggerSupplier Supplier for outtake trigger value (left trigger)
@@ -43,7 +41,6 @@ public class IntakeCommand extends CommandBase {
 
     /**
      * Convenience constructor using GamepadEx.
-     * 
      * @param intakeSubsystem The intake subsystem to control
      * @param gamepad The gamepad for input (typically gamepad2)
      */

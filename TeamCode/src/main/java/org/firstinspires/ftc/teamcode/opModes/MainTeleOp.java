@@ -14,14 +14,12 @@ import org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem;
 
 /**
  * Main TeleOp mode for the robot.
- * 
  * Driver (Gamepad 1):
  * - Left stick: Drive forward/backward and strafe
  * - Right stick X: Rotate
  * - Left bumper (hold): Precision mode (35% speed)
  * - Right bumper (hold): Turbo mode (100% speed)
  * - Back button: Reset gyro
- * 
  * Operator (Gamepad 2):
  * - Right trigger: Run intake
  * - Left trigger: Run outtake
