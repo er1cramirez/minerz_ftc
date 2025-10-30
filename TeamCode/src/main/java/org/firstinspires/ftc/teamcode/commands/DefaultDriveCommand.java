@@ -12,7 +12,6 @@ import java.util.function.DoubleSupplier;
 
 /**
  * Default drive command for teleoperated control.
- * 
  * Features:
  * - Normal speed: 70% (base)
  * - Precision mode: 35% (hold left bumper)
@@ -71,8 +70,8 @@ public class DefaultDriveCommand extends CommandBase {
         this(
             driveSubsystem,
             () -> -gamepad.getLeftY(),
-            () -> gamepad.getLeftX(),
-            () -> gamepad.getRightX(),
+            () -> -gamepad.getLeftX(),
+            () -> -gamepad.getRightX(),
             () -> gamepad.getButton(IOConstants.Driver.PRECISION_MODE_BUTTON),
             () -> gamepad.getButton(IOConstants.Driver.TURBO_MODE_BUTTON),
             () -> DriveConstants.DriveMode.DEFAULT_FIELD_RELATIVE
