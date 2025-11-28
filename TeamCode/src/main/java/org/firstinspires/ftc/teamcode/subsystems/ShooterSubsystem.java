@@ -10,17 +10,13 @@ import org.firstinspires.ftc.teamcode.constants.RobotConstants;
 
 /**
  * Subsystem for the shooter flywheel mechanism.
- * 
- * FUTURE IMPLEMENTATION:
- * - Velocity control for consistent shooting
- * - Distance-based speed adjustment
- * - AprilTag-based auto-aiming integration
- * - Optional turret for orientation
- * 
- * This is a basic template to be expanded as the mechanical design is finalized.
  */
 public class ShooterSubsystem extends SubsystemBase {
 
+    private final double wheelDiameter = 4.0; // inches (example value)
+    private final double wheel2motorGearRatio = 1.0; // example value
+
+    private final double encoderTicksPerRevolution = 28.0; // example value
     private final MotorEx shooterMotor;
     
     // Target velocity in RPM (to be tuned)
@@ -33,22 +29,19 @@ public class ShooterSubsystem extends SubsystemBase {
      */
     public ShooterSubsystem(HardwareMap hardwareMap) {
         shooterMotor = new MotorEx(hardwareMap, 
-                RobotConstants.HardwareNames.SHOOTER_MOTOR, 
-                Motor.GoBILDA.RPM_312);
+                RobotConstants.HardwareNames.SHOOTER_MOTOR
+                );
         shooterMotor.setZeroPowerBehavior(ZeroPowerBehavior.FLOAT); // Flywheel should coast
-        
-        // Enable velocity control if using encoder feedback
-        // shooterMotor.setRunMode(Motor.RunMode.VelocityControl);
+
+        shooterMotor.setRunMode(Motor.RunMode.VelocityControl);
+        shooterMotor.setDistancePerPulse(
+                (Math.PI * wheelDiameter) / (wheel2motorGearRatio * encoderTicksPerRevolution)
+        );
+        shooterMotor.setVeloCoefficients(1.0, 0, 0);
+        shooterMotor.setFeedforwardCoefficients(0, 0.1);
     }
 
-    /**
-     * Sets the shooter motor power directly.
-     * 
-     * @param power The power to set (0.0 to 1.0)
-     */
-    public void setPower(double power) {
-        shooterMotor.set(power);
-    }
+  
 
     /**
      * Sets the target velocity for the flywheel.
@@ -57,7 +50,7 @@ public class ShooterSubsystem extends SubsystemBase {
      */
     public void setVelocity(double rpm) {
         targetVelocity = rpm;
-        // Implementation will depend on control strategy
+        shooterMotor.setVelocity(rpm);
         // shooterMotor.setVelocity(rpm);
     }
 
@@ -65,14 +58,14 @@ public class ShooterSubsystem extends SubsystemBase {
      * Starts the shooter at a default speed.
      */
     public void spinUp() {
-        setPower(0.8); // Placeholder value
+        shooterMotor.set(0.8); // Placeholder value
     }
 
     /**
      * Stops the shooter.
      */
     public void stop() {
-        setPower(0);
+        shooterMotor.set(0.0);
         targetVelocity = 0;
     }
 
@@ -107,7 +100,5 @@ public class ShooterSubsystem extends SubsystemBase {
 
     @Override
     public void periodic() {
-        // Future: Monitor velocity and adjust control if needed
-        // Future: Update telemetry for tuning
     }
 }
