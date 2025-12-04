@@ -9,6 +9,7 @@ import com.seattlesolvers.solverslib.gamepad.GamepadEx;
 import org.firstinspires.ftc.teamcode.commands.DefaultDriveCommand;
 import org.firstinspires.ftc.teamcode.commands.IntakeCommand;
 import org.firstinspires.ftc.teamcode.constants.IOConstants;
+import org.firstinspires.ftc.teamcode.subsystems.ArtifactIndexer;
 import org.firstinspires.ftc.teamcode.subsystems.DriveSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem;
 
@@ -30,6 +31,7 @@ public class MainTeleOp extends CommandOpMode {
     // Subsystems
     private DriveSubsystem driveSubsystem;
     private IntakeSubsystem intakeSubsystem;
+    private ArtifactIndexer indexer;
 
     // Commands
     private DefaultDriveCommand defaultDriveCommand;
@@ -38,9 +40,6 @@ public class MainTeleOp extends CommandOpMode {
     // Gamepads
     private GamepadEx driverGamepad;
     private GamepadEx operatorGamepad;
-
-    // Buttons
-    private Button resetGyroButton;
 
     @Override
     public void initialize() {
@@ -51,6 +50,7 @@ public class MainTeleOp extends CommandOpMode {
         // Initialize subsystems
         driveSubsystem = new DriveSubsystem(hardwareMap);
         intakeSubsystem = new IntakeSubsystem(hardwareMap);
+        indexer = new ArtifactIndexer(hardwareMap, "indexer_servo");
 
         // Create commands
         defaultDriveCommand = new DefaultDriveCommand(driveSubsystem, driverGamepad);
@@ -77,10 +77,26 @@ public class MainTeleOp extends CommandOpMode {
      */
     private void configureButtonBindings() {
         // Reset gyro when back button is pressed
-        resetGyroButton = new GamepadButton(driverGamepad, IOConstants.Driver.RESET_GYRO_BUTTON)
+        // Haptic feedback
+        // Buttons
+        Button resetGyroButton = new GamepadButton(driverGamepad, IOConstants.Driver.RESET_GYRO_BUTTON)
                 .whenPressed(() -> {
                     driveSubsystem.resetGyro();
                     gamepad1.rumble(200); // Haptic feedback
+                });
+        // Button to change the ball indexer by one position when 'A' is pressed
+        // add aprox 360/3 degrees to the target position of the servo calling turnTrigger()
+        // Haptic feedback
+        Button turnIndexerButton = new GamepadButton(operatorGamepad, IOConstants.Operator.INDEXER_ADVANCE_BUTTON)
+                .whenPressed(() -> {
+                    indexer.turnTrigger();
+                    gamepad2.rumble(50); // Haptic feedback
+                });
+        // Haptic feedback
+        Button backIndexButton = new GamepadButton(operatorGamepad, IOConstants.Operator.INDEXER_REVERSE_BUTTON)
+                .whenPressed(() -> {
+                    indexer.feed();
+                    gamepad2.rumble(50); // Haptic feedback
                 });
     }
 
@@ -113,6 +129,11 @@ public class MainTeleOp extends CommandOpMode {
         
         // Intake status
         telemetry.addData("Intake", intakeSubsystem.isRunning() ? "Running" : "Stopped");
+        
+        // Indexer status
+        telemetry.addData("Indexer Slot", indexer.getCurrentSlot());
+        telemetry.addData("Indexer Position", indexer.isAtIntake() ? "Intake" : "Outtake");
+        telemetry.addData("Balls Loaded", indexer.getBallCount());
         
         telemetry.update();
     }

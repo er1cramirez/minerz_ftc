@@ -41,6 +41,10 @@ public final class IOConstants {
         // Future shooter controls
         public static final GamepadKeys.Button SHOOT_BUTTON = GamepadKeys.Button.A;
         public static final GamepadKeys.Button SHOOTER_TOGGLE = GamepadKeys.Button.B;
+
+        // Future indexer controls
+        public static final GamepadKeys.Button INDEXER_ADVANCE_BUTTON = GamepadKeys.Button.X;
+        public static final GamepadKeys.Button INDEXER_REVERSE_BUTTON = GamepadKeys.Button.Y;
     }
     
     /**
