@@ -38,13 +38,22 @@ public final class IOConstants {
         public static final GamepadKeys.Trigger INTAKE_TRIGGER = GamepadKeys.Trigger.RIGHT_TRIGGER;
         public static final GamepadKeys.Trigger OUTTAKE_TRIGGER = GamepadKeys.Trigger.LEFT_TRIGGER;
         
-        // Future shooter controls
-        public static final GamepadKeys.Button SHOOT_BUTTON = GamepadKeys.Button.A;
-        public static final GamepadKeys.Button SHOOTER_TOGGLE = GamepadKeys.Button.B;
+        // Shooter controls
+        public static final GamepadKeys.Button SHOOTER_TOGGLE = GamepadKeys.Button.A;  // Toggle flywheel idle/stop
+        public static final GamepadKeys.Button SHOOTER_SPINUP = GamepadKeys.Button.B;  // Spin up to full speed
+        
+        // Ejector controls
+        public static final GamepadKeys.Button EJECT_BUTTON = GamepadKeys.Button.RIGHT_BUMPER;  // Trigger ejector
 
-        // Future indexer controls
-        public static final GamepadKeys.Button INDEXER_ADVANCE_BUTTON = GamepadKeys.Button.X;
-        public static final GamepadKeys.Button INDEXER_REVERSE_BUTTON = GamepadKeys.Button.Y;
+        // Indexer controls
+        public static final GamepadKeys.Button INDEXER_ADVANCE_BUTTON = GamepadKeys.Button.X;  // Next position
+        public static final GamepadKeys.Button INDEXER_REVERSE_BUTTON = GamepadKeys.Button.Y;  // Previous position
+        
+        // D-Pad for direct slot access (optional)
+        public static final GamepadKeys.Button DPAD_UP = GamepadKeys.Button.DPAD_UP;
+        public static final GamepadKeys.Button DPAD_DOWN = GamepadKeys.Button.DPAD_DOWN;
+        public static final GamepadKeys.Button DPAD_LEFT = GamepadKeys.Button.DPAD_LEFT;
+        public static final GamepadKeys.Button DPAD_RIGHT = GamepadKeys.Button.DPAD_RIGHT;
     }
     
     /**

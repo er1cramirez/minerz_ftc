@@ -11,19 +11,28 @@ import org.firstinspires.ftc.teamcode.commands.IntakeCommand;
 import org.firstinspires.ftc.teamcode.constants.IOConstants;
 import org.firstinspires.ftc.teamcode.subsystems.ArtifactIndexer;
 import org.firstinspires.ftc.teamcode.subsystems.DriveSubsystem;
+import org.firstinspires.ftc.teamcode.subsystems.EjectorSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem;
+import org.firstinspires.ftc.teamcode.subsystems.ShooterSubsystem;
 
 /**
  * Main TeleOp mode for the robot.
+ * 
  * Driver (Gamepad 1):
  * - Left stick: Drive forward/backward and strafe
  * - Right stick X: Rotate
  * - Left bumper (hold): Precision mode (35% speed)
  * - Right bumper (hold): Turbo mode (100% speed)
  * - Back button: Reset gyro
+ * 
  * Operator (Gamepad 2):
  * - Right trigger: Run intake
  * - Left trigger: Run outtake
+ * - X button: Indexer advance (cycles through all 6 positions)
+ * - Y button: Indexer reverse
+ * - A button: Toggle shooter idle/stop
+ * - B button: Shooter spin up to full speed
+ * - Right bumper: Trigger ejector
  */
 @TeleOp(name = "Main TeleOp", group = "Competition")
 public class MainTeleOp extends CommandOpMode {
@@ -32,6 +41,8 @@ public class MainTeleOp extends CommandOpMode {
     private DriveSubsystem driveSubsystem;
     private IntakeSubsystem intakeSubsystem;
     private ArtifactIndexer indexer;
+    private EjectorSubsystem ejector;
+    private ShooterSubsystem shooter;
 
     // Commands
     private DefaultDriveCommand defaultDriveCommand;
@@ -51,6 +62,8 @@ public class MainTeleOp extends CommandOpMode {
         driveSubsystem = new DriveSubsystem(hardwareMap);
         intakeSubsystem = new IntakeSubsystem(hardwareMap);
         indexer = new ArtifactIndexer(hardwareMap, "indexer_servo");
+        ejector = new EjectorSubsystem(hardwareMap);
+        shooter = new ShooterSubsystem(hardwareMap);
 
         // Create commands
         defaultDriveCommand = new DefaultDriveCommand(driveSubsystem, driverGamepad);
@@ -60,7 +73,7 @@ public class MainTeleOp extends CommandOpMode {
         configureButtonBindings();
 
         // Register subsystems
-        register(driveSubsystem, intakeSubsystem);
+        register(driveSubsystem, intakeSubsystem, indexer, ejector, shooter);
 
         // Set default commands
         driveSubsystem.setDefaultCommand(defaultDriveCommand);
@@ -76,27 +89,66 @@ public class MainTeleOp extends CommandOpMode {
      * Configures button bindings for commands.
      */
     private void configureButtonBindings() {
+        // ==================== Driver Controls ====================
+        
         // Reset gyro when back button is pressed
-        // Haptic feedback
-        // Buttons
-        Button resetGyroButton = new GamepadButton(driverGamepad, IOConstants.Driver.RESET_GYRO_BUTTON)
+        new GamepadButton(driverGamepad, IOConstants.Driver.RESET_GYRO_BUTTON)
                 .whenPressed(() -> {
                     driveSubsystem.resetGyro();
-                    gamepad1.rumble(200); // Haptic feedback
+                    gamepad1.rumble(200);
                 });
-        // Button to change the ball indexer by one position when 'A' is pressed
-        // add aprox 360/3 degrees to the target position of the servo calling turnTrigger()
-        // Haptic feedback
-        Button turnIndexerButton = new GamepadButton(operatorGamepad, IOConstants.Operator.INDEXER_ADVANCE_BUTTON)
+        
+        // ==================== Indexer Controls ====================
+        
+        // Advance indexer through all 6 positions: 
+        // SLOT_1_INTAKE -> SLOT_2_INTAKE -> SLOT_3_INTAKE -> 
+        // SLOT_1_OUTTAKE -> SLOT_2_OUTTAKE -> SLOT_3_OUTTAKE -> (repeat)
+        new GamepadButton(operatorGamepad, IOConstants.Operator.INDEXER_ADVANCE_BUTTON)
                 .whenPressed(() -> {
-                    indexer.turnTrigger();
-                    gamepad2.rumble(50); // Haptic feedback
+                    indexer.advanceToNextPosition();
+                    gamepad2.rumble(50);
                 });
-        // Haptic feedback
-        Button backIndexButton = new GamepadButton(operatorGamepad, IOConstants.Operator.INDEXER_REVERSE_BUTTON)
+        
+        // Reverse indexer through positions
+        new GamepadButton(operatorGamepad, IOConstants.Operator.INDEXER_REVERSE_BUTTON)
                 .whenPressed(() -> {
-                    indexer.feed();
-                    gamepad2.rumble(50); // Haptic feedback
+                    indexer.reverseToPreviousPosition();
+                    gamepad2.rumble(50);
+                });
+        
+        // ==================== Shooter Controls ====================
+        
+        // Toggle shooter between idle and stopped
+        new GamepadButton(operatorGamepad, IOConstants.Operator.SHOOTER_TOGGLE)
+                .whenPressed(() -> {
+                    if (shooter.isRunning()) {
+                        shooter.stop();
+                        gamepad2.rumble(100);
+                    } else {
+                        shooter.startIdle();
+                        gamepad2.rumble(200);
+                    }
+                });
+        
+        // Spin up to full shooting velocity (hold)
+        new GamepadButton(operatorGamepad, IOConstants.Operator.SHOOTER_SPINUP)
+                .whenHeld(() -> {
+                    shooter.spinUp();
+                })
+                .whenReleased(() -> {
+                    // Return to idle if was running, otherwise stop
+                    if (shooter.getState() != ShooterSubsystem.ShooterState.STOPPED) {
+                        shooter.returnToIdle();
+                    }
+                });
+        
+        // ==================== Ejector Controls ====================
+        
+        // Trigger ejector cycle (eject -> stow)
+        new GamepadButton(operatorGamepad, IOConstants.Operator.EJECT_BUTTON)
+                .whenPressed(() -> {
+                    ejector.ejectAndStow();
+                    gamepad2.rumble(100);
                 });
     }
 
@@ -131,9 +183,19 @@ public class MainTeleOp extends CommandOpMode {
         telemetry.addData("Intake", intakeSubsystem.isRunning() ? "Running" : "Stopped");
         
         // Indexer status
+        telemetry.addData("Indexer Position", indexer.getCurrentPosition().name());
         telemetry.addData("Indexer Slot", indexer.getCurrentSlot());
-        telemetry.addData("Indexer Position", indexer.isAtIntake() ? "Intake" : "Outtake");
+        telemetry.addData("Indexer Mode", indexer.isAtIntake() ? "INTAKE" : "OUTTAKE");
         telemetry.addData("Balls Loaded", indexer.getBallCount());
+        
+        // Shooter status
+        telemetry.addData("Shooter State", shooter.getState().name());
+        telemetry.addData("Shooter Velocity", "%.0f / %.0f", 
+                shooter.getVelocity(), shooter.getTargetVelocity());
+        telemetry.addData("Shooter Ready", shooter.isReady() ? "YES" : "NO");
+        
+        // Ejector status
+        telemetry.addData("Ejector", ejector.isStowed() ? "Stowed" : "Ejecting");
         
         telemetry.update();
     }

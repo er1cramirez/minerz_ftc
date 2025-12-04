@@ -37,5 +37,5 @@ public final class EjectorConstants {
     /**
      * Hardware name
      */
-    public static final String SERVO_NAME = "ejector";
+    public static final String SERVO_NAME = "ejector_servo";
 }

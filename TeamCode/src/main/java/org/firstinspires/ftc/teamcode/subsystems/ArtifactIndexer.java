@@ -268,6 +268,63 @@ public class ArtifactIndexer extends SubsystemBase {
     }
 
     /**
+     * Advances to the next position in sequence for testing.
+     * Sequence: SLOT_1_INTAKE -> SLOT_2_INTAKE -> SLOT_3_INTAKE -> 
+     *           SLOT_1_OUTTAKE -> SLOT_2_OUTTAKE -> SLOT_3_OUTTAKE -> (repeat)
+     * 
+     * Useful for manual testing of all 6 positions.
+     */
+    public void advanceToNextPosition() {
+        switch (currentPosition) {
+            case SLOT_1_INTAKE:
+                setPosition(IndexerPosition.SLOT_2_INTAKE);
+                break;
+            case SLOT_2_INTAKE:
+                setPosition(IndexerPosition.SLOT_3_INTAKE);
+                break;
+            case SLOT_3_INTAKE:
+                setPosition(IndexerPosition.SLOT_1_OUTTAKE);
+                break;
+            case SLOT_1_OUTTAKE:
+                setPosition(IndexerPosition.SLOT_2_OUTTAKE);
+                break;
+            case SLOT_2_OUTTAKE:
+                setPosition(IndexerPosition.SLOT_3_OUTTAKE);
+                break;
+            case SLOT_3_OUTTAKE:
+                setPosition(IndexerPosition.SLOT_1_INTAKE);
+                break;
+        }
+    }
+
+    /**
+     * Reverses to the previous position in sequence for testing.
+     * Opposite of advanceToNextPosition().
+     */
+    public void reverseToPreviousPosition() {
+        switch (currentPosition) {
+            case SLOT_1_INTAKE:
+                setPosition(IndexerPosition.SLOT_3_OUTTAKE);
+                break;
+            case SLOT_2_INTAKE:
+                setPosition(IndexerPosition.SLOT_1_INTAKE);
+                break;
+            case SLOT_3_INTAKE:
+                setPosition(IndexerPosition.SLOT_2_INTAKE);
+                break;
+            case SLOT_1_OUTTAKE:
+                setPosition(IndexerPosition.SLOT_3_INTAKE);
+                break;
+            case SLOT_2_OUTTAKE:
+                setPosition(IndexerPosition.SLOT_1_OUTTAKE);
+                break;
+            case SLOT_3_OUTTAKE:
+                setPosition(IndexerPosition.SLOT_2_OUTTAKE);
+                break;
+        }
+    }
+
+    /**
      * Sets the intake position for a specific slot.
      * @param slotNumber 1, 2, or 3
      */
