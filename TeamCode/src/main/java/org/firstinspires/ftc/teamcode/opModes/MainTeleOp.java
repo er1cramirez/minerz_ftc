@@ -2,9 +2,9 @@ package org.firstinspires.ftc.teamcode.opModes;
 
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.seattlesolvers.solverslib.command.CommandOpMode;
-import com.seattlesolvers.solverslib.command.button.Button;
 import com.seattlesolvers.solverslib.command.button.GamepadButton;
 import com.seattlesolvers.solverslib.gamepad.GamepadEx;
+import com.seattlesolvers.solverslib.gamepad.GamepadKeys;
 
 import org.firstinspires.ftc.teamcode.commands.DefaultDriveCommand;
 import org.firstinspires.ftc.teamcode.commands.IntakeCommand;
@@ -100,25 +100,48 @@ public class MainTeleOp extends CommandOpMode {
         
         // ==================== Indexer Controls ====================
         
-        // Advance indexer through all 6 positions: 
-        // SLOT_1_INTAKE -> SLOT_2_INTAKE -> SLOT_3_INTAKE -> 
-        // SLOT_1_OUTTAKE -> SLOT_2_OUTTAKE -> SLOT_3_OUTTAKE -> (repeat)
+        // OLD SIMPLE VERSION - Advance to next intake position (turnTrigger)
         new GamepadButton(operatorGamepad, IOConstants.Operator.INDEXER_ADVANCE_BUTTON)
                 .whenPressed(() -> {
-                    indexer.advanceToNextPosition();
+                    indexer.turnTrigger();
                     gamepad2.rumble(50);
                 });
         
-        // Reverse indexer through positions
+        // OLD SIMPLE VERSION - Toggle outtake (feed)
         new GamepadButton(operatorGamepad, IOConstants.Operator.INDEXER_REVERSE_BUTTON)
                 .whenPressed(() -> {
-                    indexer.reverseToPreviousPosition();
+                    indexer.feed();
+                    gamepad2.rumble(50);
+                });
+        
+        // TESTING: Use D-pad to test raw servo positions
+        new GamepadButton(operatorGamepad, GamepadKeys.Button.DPAD_UP)
+                .whenPressed(() -> {
+                    indexer.setRawPosition(0.0);  // 0°
+                    gamepad2.rumble(50);
+                });
+        
+        new GamepadButton(operatorGamepad, GamepadKeys.Button.DPAD_RIGHT)
+                .whenPressed(() -> {
+                    indexer.setRawPosition(0.4);  // 120°
+                    gamepad2.rumble(50);
+                });
+        
+        new GamepadButton(operatorGamepad, GamepadKeys.Button.DPAD_DOWN)
+                .whenPressed(() -> {
+                    indexer.setRawPosition(0.8);  // 240°
+                    gamepad2.rumble(50);
+                });
+        
+        new GamepadButton(operatorGamepad, GamepadKeys.Button.DPAD_LEFT)
+                .whenPressed(() -> {
+                    indexer.setRawPosition(1.0);  // 300°
                     gamepad2.rumble(50);
                 });
         
         // ==================== Shooter Controls ====================
         
-        // Toggle shooter between idle and stopped
+        // Toggle shooter between idle and stopped (A button)
         new GamepadButton(operatorGamepad, IOConstants.Operator.SHOOTER_TOGGLE)
                 .whenPressed(() -> {
                     if (shooter.isRunning()) {
@@ -130,15 +153,17 @@ public class MainTeleOp extends CommandOpMode {
                     }
                 });
         
-        // Spin up to full shooting velocity (hold)
+        // Toggle spin up to full velocity (B button) - changed from hold to toggle for testing
         new GamepadButton(operatorGamepad, IOConstants.Operator.SHOOTER_SPINUP)
-                .whenHeld(() -> {
-                    shooter.spinUp();
-                })
-                .whenReleased(() -> {
-                    // Return to idle if was running, otherwise stop
-                    if (shooter.getState() != ShooterSubsystem.ShooterState.STOPPED) {
+                .whenPressed(() -> {
+                    if (shooter.isReady() || shooter.getState() == ShooterSubsystem.ShooterState.SPINNING_UP) {
+                        // Already at full speed, return to idle
                         shooter.returnToIdle();
+                        gamepad2.rumble(100);
+                    } else {
+                        // Spin up to full speed
+                        shooter.spinUp();
+                        gamepad2.rumble(200);
                     }
                 });
         
@@ -183,9 +208,7 @@ public class MainTeleOp extends CommandOpMode {
         telemetry.addData("Intake", intakeSubsystem.isRunning() ? "Running" : "Stopped");
         
         // Indexer status
-        telemetry.addData("Indexer Position", indexer.getCurrentPosition().name());
-        telemetry.addData("Indexer Slot", indexer.getCurrentSlot());
-        telemetry.addData("Indexer Mode", indexer.isAtIntake() ? "INTAKE" : "OUTTAKE");
+        telemetry.addData("Indexer", indexer.getDebugInfo());
         telemetry.addData("Balls Loaded", indexer.getBallCount());
         
         // Shooter status

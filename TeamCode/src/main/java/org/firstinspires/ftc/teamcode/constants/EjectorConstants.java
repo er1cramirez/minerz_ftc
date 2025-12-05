@@ -11,13 +11,14 @@ public final class EjectorConstants {
     
     /**
      * Servo positions (0.0 to 1.0)
+     *
      */
     public static final class Positions {
         // Stow position - servo retracted, not interfering with ball
-        public static final double STOW_POSITION = 0.0;
+        public static final double STOW_POSITION = 0.5;
         
         // Eject position - servo extended, pushing ball into shooter
-        public static final double EJECT_POSITION = 0.5;
+        public static final double EJECT_POSITION = 0.0;
     }
     
     /**

@@ -65,15 +65,20 @@ public class ShooterSubsystem extends SubsystemBase {
      */
     public ShooterSubsystem(HardwareMap hardwareMap) {
         // Initialize flywheel motor
-        flywheelMotor = new MotorEx(hardwareMap, 
-                ShooterConstants.Motor.FLYWHEEL_MOTOR, 
-                ShooterConstants.Motor.MOTOR_TYPE);
+        flywheelMotor = new MotorEx(hardwareMap,
+                ShooterConstants.Motor.FLYWHEEL_MOTOR,
+                28,  // Encoder ticks per revolution for Rev HD Hex motor
+                6000  // Max RPM for Rev HD Hex motor
+        );
         
-        // Configure motor for velocity control
+        // Configure for velocity control
         flywheelMotor.setZeroPowerBehavior(ZeroPowerBehavior.FLOAT);
-        flywheelMotor.setRunMode(RunMode.VelocityControl);
         
-        // Set PID and feedforward coefficients
+        // Invert motor if needed (not encoder - they should match)
+        flywheelMotor.setInverted(true);  // Change to false if wrong direction
+        
+        // Set velocity control mode and PID coefficients
+        flywheelMotor.setRunMode(RunMode.VelocityControl);
         flywheelMotor.setVeloCoefficients(
                 ShooterConstants.VelocityPID.kP,
                 ShooterConstants.VelocityPID.kI,

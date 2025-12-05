@@ -180,6 +180,9 @@ public class ArtifactIndexer extends SubsystemBase {
     private final Servo indexerServo;
     private IndexerPosition currentPosition;
     private final SlotState[] slots;
+    
+    // Simple state tracking for old behavior
+    private int simplePosition = 0;
 
     /**
      * Creates a new ArtifactIndexer.
@@ -196,8 +199,9 @@ public class ArtifactIndexer extends SubsystemBase {
             slots[i] = new SlotState();
         }
         
-        // Set initial position
-        setPosition(currentPosition);
+        // Set initial position using old method
+        indexerServo.setPosition(0.0);
+        simplePosition = 0;
     }
 
     /**
@@ -205,8 +209,17 @@ public class ArtifactIndexer extends SubsystemBase {
      * @param position The desired position
      */
     public void setPosition(IndexerPosition position) {
-        indexerServo.setPosition(position.getServoPosition());
+        double targetPosition = position.getServoPosition();
+        indexerServo.setPosition(targetPosition);
         currentPosition = position;
+    }
+    
+    /**
+     * Sets the servo to a raw position value for testing.
+     * @param rawPosition Servo position (0.0 to 1.0)
+     */
+    public void setRawPosition(double rawPosition) {
+        indexerServo.setPosition(rawPosition);
     }
 
     /**
@@ -488,21 +501,37 @@ public class ArtifactIndexer extends SubsystemBase {
     // ==================== Legacy Methods (for backwards compatibility) ====================
 
     /**
-     * Advances to next slot intake position.
-     * @deprecated Use {@link #advanceToNextIntake()} instead
+     * OLD SIMPLE VERSION - Advances to next slot intake position.
+     * Uses raw servo positions like the original code.
      */
-    @Deprecated
     public void turnTrigger() {
-        advanceToNextIntake();
+        if (simplePosition == 0) {
+            indexerServo.setPosition(0.0 / 300.0);  // 0°
+            simplePosition = 1;
+        } else if (simplePosition == 1) {
+            indexerServo.setPosition(120.0 / 300.0);  // 120°
+            simplePosition = 2;
+        } else {
+            indexerServo.setPosition(240.0 / 300.0);  // 240°
+            simplePosition = 2;  // Stay at 2
+        }
     }
 
     /**
-     * Toggles to outtake then advances.
-     * @deprecated Use {@link #moveToOuttake()} or {@link #advanceToNextIntake()} instead
+     * OLD SIMPLE VERSION - Toggles to outtake position.
+     * Uses raw servo positions like the original code.
      */
-    @Deprecated
     public void feed() {
-        toggleIntakeOuttake();
+        if (simplePosition == 2) {
+            indexerServo.setPosition(300.0 / 300.0);  // 300°
+            simplePosition = 3;
+        } else if (simplePosition == 3) {
+            indexerServo.setPosition(180.0 / 300.0);  // 180°
+            simplePosition = 4;
+        } else {
+            indexerServo.setPosition(60.0 / 300.0);  // 60°
+            simplePosition = 0;
+        }
     }
 
     /**
@@ -536,5 +565,41 @@ public class ArtifactIndexer extends SubsystemBase {
      */
     public boolean isAtOuttake() {
         return currentPosition.isOuttake();
+    }
+
+    /**
+     * Gets the current position in degrees.
+     * @return Current position in degrees (0-300)
+     */
+    public double getCurrentDegrees() {
+        return currentPosition.getDegrees();
+    }
+
+    /**
+     * Gets the current servo position value.
+     * @return Servo position (0.0 to 1.0)
+     */
+    public double getServoPosition() {
+        return indexerServo.getPosition();
+    }
+
+    /**
+     * Gets the simple position state for debugging.
+     */
+    public int getSimplePosition() {
+        return simplePosition;
+    }
+
+    /**
+     * Gets telemetry string for debugging.
+     * @return Formatted debug string
+     */
+    public String getDebugInfo() {
+        return String.format("%s | Slot %d | %.1f° | Servo: %.3f | Simple: %d",
+                currentPosition.name(),
+                getCurrentSlot(),
+                getCurrentDegrees(),
+                getServoPosition(),
+                simplePosition);
     }
 }
