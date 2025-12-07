@@ -6,15 +6,9 @@ import com.seattlesolvers.solverslib.command.SubsystemBase;
 import com.seattlesolvers.solverslib.hardware.servos.ServoEx;
 
 import org.firstinspires.ftc.teamcode.constants.EjectorConstants;
+import org.firstinspires.ftc.teamcode.constants.EjectorConstants.EjectorState;
 
 public class EjectorSubsystem extends SubsystemBase {
-
-    public enum EjectorState {
-        STOWED,
-        EJECTING,
-        RETURNING 
-    }
-
     private EjectorState currentState;
 
     // Hardware

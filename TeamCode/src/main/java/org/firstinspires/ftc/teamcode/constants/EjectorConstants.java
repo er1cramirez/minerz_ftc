@@ -2,6 +2,12 @@
 package org.firstinspires.ftc.teamcode.constants;
 
 public class EjectorConstants {
+
+    public enum EjectorState {
+        STOWED,
+        EJECTING,
+        RETURNING 
+    }
     
     // Hardware names
     public static final String SERVO_NAME = "ejectorServo";
