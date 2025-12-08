@@ -1,32 +1,109 @@
-
 package org.firstinspires.ftc.teamcode.constants;
 
+/**
+ * Constantes para el SpindexerSubsystem.
+ *
+ * IMPORTANTE: Los umbrales de color deben calibrarse usando
+ * el OpMode SpindexerSensorCalibration antes de competencia.
+ */
 public class SpindexerConstants {
-    
-    // Hardware names
+
+    // ==================== HARDWARE NAMES ====================
+
     public static final String SERVO_NAME = "spindexerServo";
+    public static final String COLOR_SENSOR_NAME = "colorSensor";
 
-    
-    // Lista de posiciones del servo del spindexer en valores normalizados (0.0 a 1.0)
-    
-    private static final double maxDegree = 300;
-    public static final double SLOT_0_INTAKE_POSITION = 0.0 / maxDegree;
-    public static final double SLOT_0_OUTTAKE_POSITION = 60.0 / maxDegree;
-    public static final double SLOT_1_INTAKE_POSITION = 120.0 / maxDegree;
-    public static final double SLOT_1_OUTTAKE_POSITION = 180.0 / maxDegree;
-    public static final double SLOT_2_INTAKE_POSITION = 240.0 / maxDegree;
-    public static final double SLOT_2_OUTTAKE_POSITION = 300.0 / maxDegree;
+    // ==================== POSICIONES DEL SERVO ====================
 
-    
-    // Umbral de distancia para detectar pelota (en cm)
-    private static final double BALL_DETECTION_DISTANCE = 4.0;
-    
-    // Umbrales de color normalizados (AJUSTAR SEGÚN PRUEBAS)
-    private static final double YELLOW_RED_MIN = 0.35;
-    private static final double YELLOW_GREEN_MIN = 0.35;
-    private static final double YELLOW_BLUE_MAX = 0.25;
-    
-    private static final double PURPLE_BLUE_MIN = 0.40;
-    private static final double PURPLE_RED_MIN = 0.30;
-    private static final double PURPLE_GREEN_MAX = 0.30;
+    // Rango del servo goBILDA
+    private static final double MAX_DEGREE = 300.0;
+
+    /**
+     * Convierte grados a posición de servo normalizada (0.0 - 1.0).
+     *
+     * @param degrees Ángulo en grados (0-300)
+     * @return Posición normalizada
+     */
+    private static double degreesToPosition(double degrees) {
+        return degrees / MAX_DEGREE;
+    }
+
+    // Posiciones de intake (donde entra la pelota)
+    public static final double SLOT_0_INTAKE_POSITION = degreesToPosition(0.0);
+    public static final double SLOT_1_INTAKE_POSITION = degreesToPosition(120.0);
+    public static final double SLOT_2_INTAKE_POSITION = degreesToPosition(240.0);
+
+    // Posiciones de outtake (donde se lanza la pelota)
+    // Desfasadas 60° de las posiciones de intake
+    public static final double SLOT_0_OUTTAKE_POSITION = degreesToPosition(60.0);
+    public static final double SLOT_1_OUTTAKE_POSITION = degreesToPosition(180.0);
+    public static final double SLOT_2_OUTTAKE_POSITION = degreesToPosition(300.0);
+
+    // ==================== DETECCIÓN DE PELOTA ====================
+
+    /**
+     * Distancia máxima para detectar presencia de pelota (en cm).
+     * Si el sensor lee distancia > este valor, asume que no hay pelota.
+     *
+     * CALIBRAR: Usa SpindexerSensorCalibration para determinar valor óptimo.
+     * Valor inicial basado en sensor a 3-4cm de la pelota.
+     */
+    public static final double BALL_DETECTION_DISTANCE = 5.0;
+
+    // ==================== UMBRALES DE COLOR ====================
+
+    /*
+     * IMPORTANTE: Estos son valores iniciales aproximados.
+     * DEBES calibrar usando SpindexerSensorCalibration antes de usar.
+     *
+     * Los valores son PORCENTAJES (0-100) de color normalizado.
+     * Ejemplo: Si R=100, G=100, B=50, entonces:
+     *   Total = 250
+     *   Red% = 40%
+     *   Green% = 40%
+     *   Blue% = 20%
+     */
+
+    // Umbrales para AMARILLO
+    // Amarillo típicamente tiene: alto rojo, alto verde, bajo azul
+    public static final double YELLOW_RED_MIN = 35.0;      // Rojo mínimo %
+    public static final double YELLOW_GREEN_MIN = 35.0;    // Verde mínimo %
+    public static final double YELLOW_BLUE_MAX = 25.0;     // Azul máximo %
+
+    // Umbrales para PÚRPURA
+    // Púrpura típicamente tiene: alto azul, algo de rojo, bajo verde
+    public static final double PURPLE_RED_MIN = 30.0;      // Rojo mínimo %
+    public static final double PURPLE_BLUE_MIN = 40.0;     // Azul mínimo %
+    public static final double PURPLE_GREEN_MAX = 30.0;    // Verde máximo %
+
+    // ==================== CONFIGURACIÓN DE DETECCIÓN ====================
+
+    /**
+     * Número de samples para votación durante detección.
+     * Más samples = más preciso pero más lento.
+     *
+     * Recomendado: 15-25
+     */
+    public static final int DEFAULT_VOTING_SAMPLES = 20;
+
+    /**
+     * Delay entre samples durante votación (en milisegundos).
+     *
+     * Recomendado: 30-100ms
+     */
+    public static final int DEFAULT_VOTING_DELAY_MS = 50;
+
+    // ==================== TIMEOUTS ====================
+
+    /**
+     * Tiempo máximo esperado para que el servo llegue a posición (ms).
+     * Usado por comandos para timeout safety.
+     */
+    public static final int SERVO_MOVEMENT_TIMEOUT_MS = 1000;
+
+    /**
+     * Tiempo máximo para detección de color (ms).
+     * Si la detección tarda más, se cancela.
+     */
+    public static final int DETECTION_TIMEOUT_MS = 2000;
 }
