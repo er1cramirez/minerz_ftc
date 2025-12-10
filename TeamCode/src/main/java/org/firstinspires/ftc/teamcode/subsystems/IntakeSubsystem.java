@@ -17,7 +17,7 @@ public class IntakeSubsystem extends SubsystemBase {
     private IntakeState currentState;
 
     public IntakeSubsystem(HardwareMap hardwareMap) {
-        intakeMotor = hardwareMap.get(MotorEx.class, IntakeConstants.MOTOR_NAME);
+        intakeMotor = new MotorEx(hardwareMap, IntakeConstants.MOTOR_NAME);
         currentState = IntakeState.IDLE;
         
         intakeMotor.setInverted(IntakeConstants.MOTOR_INVERTED);

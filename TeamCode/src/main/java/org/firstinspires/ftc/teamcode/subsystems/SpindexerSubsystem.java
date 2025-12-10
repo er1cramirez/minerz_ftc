@@ -72,7 +72,7 @@ public class SpindexerSubsystem extends SubsystemBase {
         UNKNOWN     // Hay algo pero color no identificado claramente
     }
     
-    // ==================== HARDWARE ====================
+  
     
     private final Servo indexerServo;
     private final SensorRevColorV3 colorSensor;
