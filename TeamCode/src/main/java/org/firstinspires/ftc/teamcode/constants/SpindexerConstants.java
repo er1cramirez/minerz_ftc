@@ -10,7 +10,7 @@ public class SpindexerConstants {
 
     // ==================== HARDWARE NAMES ====================
 
-    public static final String SERVO_NAME = "spindexerServo";
+    public static final String SERVO_NAME = "spindexer";
     public static final String COLOR_SENSOR_NAME = "colorSensor";
 
     // ==================== POSICIONES DEL SERVO ====================
