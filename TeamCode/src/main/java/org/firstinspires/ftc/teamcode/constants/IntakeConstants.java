@@ -1,12 +1,6 @@
 package org.firstinspires.ftc.teamcode.constants;
 
 public class IntakeConstants {
-
-    public enum IntakeState {
-        IDLE,
-        INTAKING,
-        OUTTAKING
-    }
     
     // Hardware names
     public static final String MOTOR_NAME = "intakeMotor";

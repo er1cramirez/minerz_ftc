@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.commands.spindexer;
+package org.firstinspires.ftc.teamcode.commands;
 
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.seattlesolvers.solverslib.command.CommandBase;

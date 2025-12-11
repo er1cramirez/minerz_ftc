@@ -2,98 +2,118 @@ package org.firstinspires.ftc.teamcode.subsystems;
 
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
-import com.qualcomm.robotcore.util.ElapsedTime;
 import com.seattlesolvers.solverslib.command.SubsystemBase;
 import com.seattlesolvers.solverslib.hardware.SensorRevColorV3;
 
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.teamcode.constants.SpindexerConstants;
 
-import java.util.ArrayList;
-import java.util.List;
-
-
+/**
+ * Subsystem que controla el spindexer (indexador rotativo de 3 slots).
+ *
+ * RESPONSABILIDADES:
+ * - Rotar entre posiciones de intake (donde entra pelota) y outtake (donde se lanza)
+ * - Detectar presencia de pelota mediante sensor de distancia
+ * - Identificar color de pelota (amarillo/púrpura)
+ * - Mantener estado de cada slot (vacío/color)
+ * - Proveer información para generar secuencias de lanzamiento
+ *
+ * IMPORTANTE:
+ * - El subsystem NO ejecuta secuencias automáticas (eso es responsabilidad de Commands)
+ * - El subsystem NO maneja delays o timers (eso es responsabilidad de Commands)
+ * - Métodos de detección son INSTANTÁNEOS (una lectura), no bloqueantes
+ *
+ * DISEÑO DEL MECANISMO:
+ * - 3 slots distribuidos cada 120° (0°, 120°, 240°)
+ * - Posición de intake: donde el slot recibe pelotas del intake
+ * - Posición de outtake: donde el slot presenta pelota al shooter (desfase 60°)
+ * - Sensor fijo en posición de intake para detectar presencia y color
+ */
 public class SpindexerSubsystem extends SubsystemBase {
-    
+
     // ==================== ENUMS ====================
-    
+
     /**
-     * Estados del spindexer
+     * Estados del spindexer.
+     * SIMPLIFICADO: Solo refleja posición física, no procesos.
      */
     public enum SpindexerState {
-        IDLE,                    // En reposo, esperando comandos
-        MOVING_TO_INTAKE,        // Rotando hacia posición de intake
-        READY_FOR_INTAKE,        // En posición de intake, esperando pelota
-        DETECTING_BALL,          // Leyendo sensor de color
-        MOVING_TO_OUTTAKE,       // Rotando hacia posición de outtake
-        READY_FOR_OUTTAKE        // En posición de outtake, listo para lanzar
-    }
-    
-    /**
-     * Estado de cada slot individual
-     */
-    public enum SlotState {
-        EMPTY,          // Slot vacío
-        YELLOW,         // Pelota amarilla
-        PURPLE,         // Pelota morada
-        UNKNOWN         // Hay algo pero color no identificado
+        IDLE,        // En reposo, posición arbitraria
+        AT_INTAKE,   // En posición de intake (slot bajo sensor)
+        AT_OUTTAKE   // En posición de outtake (slot frente a shooter)
     }
 
-    public enum BallColor {
+    /**
+     * Estado de cada slot individual.
+     */
+    public enum SlotState {
+        EMPTY,      // Slot vacío
         YELLOW,     // Pelota amarilla
-        PURPLE,     // Pelota púrpura/morada
-        NONE,       // Sin pelota detectada
+        PURPLE,     // Pelota morada
+        UNKNOWN     // Hay algo pero color no identificado
+    }
+
+    /**
+     * Resultado de lectura de color.
+     */
+    public enum BallColor {
+        YELLOW,     // Pelota amarilla detectada
+        PURPLE,     // Pelota púrpura/morada detectada
+        NONE,       // Sin pelota (distancia > umbral)
         UNKNOWN     // Hay algo pero color no identificado claramente
     }
-    
-  
-    
+
+    // ==================== HARDWARE ====================
+
     private final Servo indexerServo;
     private final SensorRevColorV3 colorSensor;
     private final boolean useSensor;
-    
+
+    // ==================== ESTADO ====================
+
     private SpindexerState currentState;
     private SlotState[] slotStates;      // Estado de cada uno de los 3 slots
     private int currentSlotIndex;        // Slot actualmente en posición (0, 1, 2)
-    
-    private final ElapsedTime detectionTimer;
-    private List<BallColor> detectionVotes;
-    private int votingSamples = 15;      // Número de lecturas para votación
-    private int votingDelayMs = 50;      // Delay entre lecturas
-    
+
+    // ==================== CONSTRUCTORES ====================
+
+    /**
+     * Constructor sin sensor (solo control de posición).
+     * Útil para testing o si el sensor no está disponible.
+     */
     public SpindexerSubsystem(HardwareMap hardwareMap) {
         this(hardwareMap, false);
     }
-    
+
     /**
-     * Constructor completo - con opción de sensor.
-     * 
+     * Constructor completo con opción de sensor.
+     *
      * @param hardwareMap El hardware map del OpMode
      * @param useSensor true si el sensor está instalado y configurado
      */
     public SpindexerSubsystem(HardwareMap hardwareMap, boolean useSensor) {
         // Inicializar servo
         indexerServo = hardwareMap.get(Servo.class, SpindexerConstants.SERVO_NAME);
-        
+
         // Inicializar sensor solo si está disponible
         this.useSensor = useSensor;
         if (useSensor) {
             try {
                 colorSensor = new SensorRevColorV3(
-                    hardwareMap, 
-                    SpindexerConstants.COLOR_SENSOR_NAME, 
-                    DistanceUnit.CM
+                        hardwareMap,
+                        SpindexerConstants.COLOR_SENSOR_NAME,
+                        DistanceUnit.CM
                 );
             } catch (Exception e) {
                 throw new RuntimeException(
-                    "Color sensor not found in hardware map. " +
-                    "Use SpindexerSubsystem(hardwareMap) if sensor is not installed."
+                        "Color sensor not found in hardware map. " +
+                                "Use SpindexerSubsystem(hardwareMap) if sensor is not installed."
                 );
             }
         } else {
             colorSensor = null;
         }
-        
+
         // Inicializar estado
         currentState = SpindexerState.IDLE;
         slotStates = new SlotState[3];
@@ -101,211 +121,95 @@ public class SpindexerSubsystem extends SubsystemBase {
             slotStates[i] = SlotState.EMPTY;
         }
         currentSlotIndex = 0;
-        
-        // Inicializar detección
-        detectionTimer = new ElapsedTime();
-        detectionVotes = new ArrayList<>();
     }
-    
+
+    // ==================== MÉTODOS DE ACCIÓN ====================
+
+    /**
+     * Mueve el spindexer a la posición de INTAKE del slot especificado.
+     * El slot queda bajo el sensor de color para detección.
+     *
+     * @param slotIndex Índice del slot (0, 1, 2)
+     */
     public void moveToIntakePosition(int slotIndex) {
         validateSlotIndex(slotIndex);
-        double angle = getIntakeAngle(slotIndex);
-        indexerServo.setPosition(angle);
+        double position = getIntakePosition(slotIndex);
+        indexerServo.setPosition(position);
         currentSlotIndex = slotIndex;
-        currentState = SpindexerState.MOVING_TO_INTAKE;
+        currentState = SpindexerState.AT_INTAKE;
     }
-    
+
+    /**
+     * Mueve el spindexer a la posición de OUTTAKE del slot especificado.
+     * El slot queda frente al shooter para lanzar.
+     *
+     * @param slotIndex Índice del slot (0, 1, 2)
+     */
     public void moveToOuttakePosition(int slotIndex) {
         validateSlotIndex(slotIndex);
-        double angle = getOuttakeAngle(slotIndex);
-        indexerServo.setPosition(angle);
+        double position = getOuttakePosition(slotIndex);
+        indexerServo.setPosition(position);
         currentSlotIndex = slotIndex;
-        currentState = SpindexerState.MOVING_TO_OUTTAKE;
+        currentState = SpindexerState.AT_OUTTAKE;
     }
-    
-    public void moveToNextIntakeSlot() {
-        currentSlotIndex = (currentSlotIndex + 1) % 3;
-        moveToIntakePosition(currentSlotIndex);
-    }
-    
+
     /**
-     * Mueve al slot vacío más cercano en posición de intake.
-     * Si no hay slots vacíos, permanece en el actual.
+     * Detiene el spindexer y marca como IDLE.
+     * Útil al final de secuencias.
      */
-    public void moveToClosestEmptySlot() {
-        for (int i = 0; i < 3; i++) {
-            int slotToCheck = (currentSlotIndex + i) % 3;
-            if (slotStates[slotToCheck] == SlotState.EMPTY) {
-                moveToIntakePosition(slotToCheck);
-                return;
-            }
-        }
-        // No hay slots vacíos, permanecer en actual
+    public void idle() {
+        currentState = SpindexerState.IDLE;
     }
+
+    // ==================== MÉTODOS DE CONSULTA - ESTADO ====================
+
     /**
-     * Verifica si hay una pelota presente frente al sensor.
-     * 
-     * @return true si detecta pelota (distancia < umbral)
-     * @throws IllegalStateException si el sensor no está disponible
+     * Obtiene el estado actual del spindexer.
      */
-    public boolean isBallDetected() {
-        requireSensor();
-        double distance = colorSensor.distance();
-        return distance < SpindexerConstants.BALL_DETECTION_DISTANCE;
+    public SpindexerState getState() {
+        return currentState;
     }
-    
+
     /**
-     * Detecta el color de la pelota actual usando sistema de votación.
-     * Toma múltiples lecturas y retorna el color con más votos.
-     * 
-     * Este método es BLOQUEANTE - toma ~1 segundo (20 samples * 50ms).
-     * Para uso asíncrono, ver startDetection() y pollDetection().
-     * 
-     * @return Color detectado (YELLOW, PURPLE, NONE, o UNKNOWN)
-     * @throws IllegalStateException si el sensor no está disponible
+     * Verifica si está en posición de intake.
      */
-    public BallColor detectBallColor() {
-        requireSensor();
-        
-        detectionVotes.clear();
-        
-        for (int i = 0; i < votingSamples; i++) {
-            BallColor vote = readSingleColorSample();
-            detectionVotes.add(vote);
-            
-            try {
-                Thread.sleep(votingDelayMs);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                return BallColor.UNKNOWN;
-            }
-        }
-        
-        return tallyVotes();
+    public boolean isAtIntake() {
+        return currentState == SpindexerState.AT_INTAKE;
     }
-    
+
     /**
-     * Lee una única muestra de color del sensor.
-     * 
-     * @return Color detectado en esta lectura
+     * Verifica si está en posición de outtake.
      */
-    private BallColor readSingleColorSample() {
-        int[] argb = colorSensor.getARGB();
-        double distance = colorSensor.distance();
-        
-        // Verificar distancia primero
-        if (distance > SpindexerConstants.BALL_DETECTION_DISTANCE) {
-            return BallColor.NONE;
-        }
-        
-        // Calcular porcentajes normalizados
-        int red = argb[1];
-        int green = argb[2];
-        int blue = argb[3];
-        int total = red + green + blue;
-        
-        if (total == 0) {
-            return BallColor.UNKNOWN;
-        }
-        
-        double redPercent = (red * 100.0) / total;
-        double greenPercent = (green * 100.0) / total;
-        double bluePercent = (blue * 100.0) / total;
-        
-        // Verificar amarillo
-        boolean isYellow = redPercent >= SpindexerConstants.YELLOW_RED_MIN && 
-                          greenPercent >= SpindexerConstants.YELLOW_GREEN_MIN && 
-                          bluePercent <= SpindexerConstants.YELLOW_BLUE_MAX;
-        
-        // Verificar púrpura
-        boolean isPurple = redPercent >= SpindexerConstants.PURPLE_RED_MIN && 
-                          bluePercent >= SpindexerConstants.PURPLE_BLUE_MIN && 
-                          greenPercent <= SpindexerConstants.PURPLE_GREEN_MAX;
-        
-        // Retornar resultado
-        if (isYellow && !isPurple) return BallColor.YELLOW;
-        if (isPurple && !isYellow) return BallColor.PURPLE;
-        
-        return BallColor.UNKNOWN;  // Ambiguo o no coincide
+    public boolean isAtOuttake() {
+        return currentState == SpindexerState.AT_OUTTAKE;
     }
-    
+
     /**
-     * Cuenta los votos y determina el color ganador.
-     * 
-     * @return Color con más votos
+     * Verifica si está en idle.
      */
-    private BallColor tallyVotes() {
-        int yellowVotes = 0;
-        int purpleVotes = 0;
-        int noneVotes = 0;
-        int unknownVotes = 0;
-        
-        for (BallColor vote : detectionVotes) {
-            switch (vote) {
-                case YELLOW: yellowVotes++; break;
-                case PURPLE: purpleVotes++; break;
-                case NONE: noneVotes++; break;
-                case UNKNOWN: unknownVotes++; break;
-            }
-        }
-        
-        // Si más de la mitad son NONE, no hay pelota
-        if (noneVotes > votingSamples / 2) {
-            return BallColor.NONE;
-        }
-        
-        // Determinar ganador
-        int maxVotes = Math.max(Math.max(yellowVotes, purpleVotes), unknownVotes);
-        
-        // Requerir al menos 60% de consenso
-        if (maxVotes < votingSamples * 0.6) {
-            return BallColor.UNKNOWN;
-        }
-        
-        if (yellowVotes == maxVotes) return BallColor.YELLOW;
-        if (purpleVotes == maxVotes) return BallColor.PURPLE;
-        
-        return BallColor.UNKNOWN;
+    public boolean isIdle() {
+        return currentState == SpindexerState.IDLE;
     }
-    
+
     /**
-     * Detecta automáticamente pelota y actualiza el estado del slot actual.
-     * Método de conveniencia que combina detección y etiquetado.
-     * 
-     * @return Color detectado
-     * @throws IllegalStateException si el sensor no está disponible
+     * Obtiene el índice del slot actualmente en posición.
      */
-    public BallColor autoDetectAndLabel() {
-        requireSensor();
-        
-        currentState = SpindexerState.DETECTING_BALL;
-        BallColor detected = detectBallColor();
-        
-        // Actualizar estado del slot
-        switch (detected) {
-            case YELLOW:
-                slotStates[currentSlotIndex] = SlotState.YELLOW;
-                break;
-            case PURPLE:
-                slotStates[currentSlotIndex] = SlotState.PURPLE;
-                break;
-            case UNKNOWN:
-                slotStates[currentSlotIndex] = SlotState.UNKNOWN;
-                break;
-            case NONE:
-                slotStates[currentSlotIndex] = SlotState.EMPTY;
-                break;
-        }
-        
-        currentState = SpindexerState.READY_FOR_INTAKE;
-        return detected;
+    public int getCurrentSlotIndex() {
+        return currentSlotIndex;
     }
-    
-    // ==================== GESTIÓN DE SLOTS ====================
-    
+
+    /**
+     * Obtiene la posición actual del servo (0.0 - 1.0).
+     */
+    public double getServoPosition() {
+        return indexerServo.getPosition();
+    }
+
+    // ==================== MÉTODOS DE CONSULTA - SLOTS ====================
+
     /**
      * Obtiene el estado de un slot específico.
-     * 
+     *
      * @param slotIndex Índice del slot (0, 1, 2)
      * @return Estado del slot
      */
@@ -313,111 +217,17 @@ public class SpindexerSubsystem extends SubsystemBase {
         validateSlotIndex(slotIndex);
         return slotStates[slotIndex];
     }
-    
+
     /**
-     * Obtiene el estado del slot actual.
-     * 
-     * @return Estado del slot actual
+     * Verifica si un slot específico está vacío.
      */
-    public SlotState getCurrentSlotState() {
-        return slotStates[currentSlotIndex];
-    }
-    
-    /**
-     * Establece manualmente el estado de un slot.
-     * Útil cuando no se usa sensor o para override.
-     * 
-     * @param slotIndex Índice del slot (0, 1, 2)
-     * @param state Nuevo estado del slot
-     */
-    public void setSlotState(int slotIndex, SlotState state) {
+    public boolean isSlotEmpty(int slotIndex) {
         validateSlotIndex(slotIndex);
-        slotStates[slotIndex] = state;
+        return slotStates[slotIndex] == SlotState.EMPTY;
     }
-    
-    /**
-     * Limpia un slot (lo marca como vacío).
-     * Típicamente llamado después de lanzar una pelota.
-     * 
-     * @param slotIndex Índice del slot (0, 1, 2)
-     */
-    public void clearSlot(int slotIndex) {
-        validateSlotIndex(slotIndex);
-        slotStates[slotIndex] = SlotState.EMPTY;
-    }
-    
-    /**
-     * Limpia el slot actual.
-     */
-    public void clearCurrentSlot() {
-        slotStates[currentSlotIndex] = SlotState.EMPTY;
-    }
-    
-    // ==================== CONSULTAS DE ESTADO ====================
-    
-    /**
-     * Obtiene el estado actual del spindexer.
-     * 
-     * @return Estado actual
-     */
-    public SpindexerState getState() {
-        return currentState;
-    }
-    
-    /**
-     * Obtiene el índice del slot actual (0, 1, 2).
-     * 
-     * @return Índice del slot actual
-     */
-    public int getCurrentSlotIndex() {
-        return currentSlotIndex;
-    }
-    
-    /**
-     * Verifica si está en posición de intake.
-     * 
-     * @return true si está en READY_FOR_INTAKE
-     */
-    public boolean isInIntakePosition() {
-        return currentState == SpindexerState.READY_FOR_INTAKE;
-    }
-    
-    /**
-     * Verifica si está en posición de outtake.
-     * 
-     * @return true si está en READY_FOR_OUTTAKE
-     */
-    public boolean isInOuttakePosition() {
-        return currentState == SpindexerState.READY_FOR_OUTTAKE;
-    }
-    
-    /**
-     * Verifica si está en estado IDLE.
-     * 
-     * @return true si está IDLE
-     */
-    public boolean isIdle() {
-        return currentState == SpindexerState.IDLE;
-    }
-    
-    /**
-     * Verifica si todos los slots están llenos.
-     * 
-     * @return true si los 3 slots tienen pelotas
-     */
-    public boolean areAllSlotsFull() {
-        for (SlotState state : slotStates) {
-            if (state == SlotState.EMPTY) {
-                return false;
-            }
-        }
-        return true;
-    }
-    
+
     /**
      * Verifica si hay al menos un slot vacío.
-     * 
-     * @return true si hay espacio disponible
      */
     public boolean hasEmptySlot() {
         for (SlotState state : slotStates) {
@@ -427,11 +237,16 @@ public class SpindexerSubsystem extends SubsystemBase {
         }
         return false;
     }
-    
+
     /**
-     * Cuenta cuántos slots tienen pelotas.
-     * 
-     * @return Número de slots llenos (0-3)
+     * Verifica si todos los slots están llenos.
+     */
+    public boolean isFull() {
+        return !hasEmptySlot();
+    }
+
+    /**
+     * Obtiene el número de slots ocupados.
      */
     public int getFilledSlotCount() {
         int count = 0;
@@ -442,49 +257,152 @@ public class SpindexerSubsystem extends SubsystemBase {
         }
         return count;
     }
-    
+
     /**
-     * Encuentra el primer slot con el color especificado.
-     * 
-     * @param color Color a buscar (YELLOW o PURPLE)
-     * @return Índice del slot, o -1 si no se encuentra
+     * Obtiene el número de slots vacíos.
      */
-    public int getFirstSlotWithColor(SlotState color) {
-        for (int i = 0; i < 3; i++) {
-            if (slotStates[i] == color) {
-                return i;
-            }
-        }
-        return -1;
+    public int getEmptySlotCount() {
+        return 3 - getFilledSlotCount();
     }
-    
-    // ==================== MÉTODOS PARA AUTÓNOMO ====================
-    
+
     /**
-     * Configura la precarga para el inicio del autónomo.
-     * Establece el estado inicial de los slots con pelotas precargadas.
-     * 
-     * @param slot0 Estado del slot 0 (EMPTY, YELLOW, o PURPLE)
-     * @param slot1 Estado del slot 1 (EMPTY, YELLOW, o PURPLE)
-     * @param slot2 Estado del slot 2 (EMPTY, YELLOW, o PURPLE)
-     * 
-     * Ejemplo:
-     * // Si precargaste 1 amarilla en slot 0
-     * spindexer.configurePreload(SlotState.YELLOW, SlotState.EMPTY, SlotState.EMPTY);
+     * Verifica si el spindexer está completamente vacío.
      */
-    public void configurePreload(SlotState slot0, SlotState slot1, SlotState slot2) {
+    public boolean isEmpty() {
+        return getFilledSlotCount() == 0;
+    }
+
+    /**
+     * Obtiene el estado de todos los slots como array.
+     * Útil para telemetría o debugging.
+     *
+     * @return Array de 3 elementos con el estado de cada slot
+     */
+    public SlotState[] getAllSlotStates() {
+        return slotStates.clone();
+    }
+
+    // ==================== MÉTODOS DE MODIFICACIÓN - SLOTS ====================
+
+    /**
+     * Establece el estado de un slot específico.
+     *
+     * @param slotIndex Índice del slot (0, 1, 2)
+     * @param state Nuevo estado del slot
+     */
+    public void setSlotState(int slotIndex, SlotState state) {
+        validateSlotIndex(slotIndex);
+        slotStates[slotIndex] = state;
+    }
+
+    /**
+     * Marca un slot como vacío.
+     * Útil después de lanzar una pelota.
+     */
+    public void clearSlot(int slotIndex) {
+        validateSlotIndex(slotIndex);
+        slotStates[slotIndex] = SlotState.EMPTY;
+    }
+
+    /**
+     * Marca el slot actual como vacío.
+     */
+    public void clearCurrentSlot() {
+        slotStates[currentSlotIndex] = SlotState.EMPTY;
+    }
+
+    /**
+     * Marca todos los slots como vacíos.
+     * Útil al inicio de autonomous o para reset.
+     */
+    public void clearAllSlots() {
+        for (int i = 0; i < 3; i++) {
+            slotStates[i] = SlotState.EMPTY;
+        }
+    }
+
+    /**
+     * Establece el estado de todos los slots de una vez.
+     *
+     * @param slot0 Estado del slot 0
+     * @param slot1 Estado del slot 1
+     * @param slot2 Estado del slot 2
+     */
+    public void setAllSlots(SlotState slot0, SlotState slot1, SlotState slot2) {
         slotStates[0] = slot0;
         slotStates[1] = slot1;
         slotStates[2] = slot2;
     }
-    
+
+    // ==================== MÉTODOS DE DETECCIÓN - SENSOR ====================
+
+    /**
+     * Verifica si hay una pelota presente bajo el sensor.
+     * Usa medición de distancia instantánea.
+     *
+     * @return true si detecta pelota (distancia < umbral)
+     * @throws IllegalStateException si el sensor no está disponible
+     */
+    public boolean isBallDetected() {
+        ensureSensorAvailable();
+        double distance = colorSensor.distance();
+        return distance < SpindexerConstants.BALL_DETECTION_DISTANCE;
+    }
+
+    /**
+     * Lee el color actual bajo el sensor (una sola muestra).
+     * Para detección confiable, llamar múltiples veces desde un comando.
+     *
+     * @return Color detectado en esta lectura instantánea
+     * @throws IllegalStateException si el sensor no está disponible
+     */
+    public BallColor readCurrentColor() {
+        ensureSensorAvailable();
+        return readSingleColorSample();
+    }
+
+    /**
+     * Obtiene los valores raw ARGB del sensor.
+     * Útil para calibración o debugging.
+     *
+     * @return Array [Alpha, Red, Green, Blue]
+     * @throws IllegalStateException si el sensor no está disponible
+     */
+    public int[] getRawColorValues() {
+        ensureSensorAvailable();
+        return colorSensor.getARGB();
+    }
+
+    /**
+     * Obtiene la distancia actual del sensor en cm.
+     * Útil para calibración o debugging.
+     *
+     * @return Distancia en centímetros
+     * @throws IllegalStateException si el sensor no está disponible
+     */
+    public double getDistance() {
+        ensureSensorAvailable();
+        return colorSensor.distance();
+    }
+
+    /**
+     * Verifica si el sensor está disponible.
+     *
+     * @return true si el sensor fue inicializado
+     */
+    public boolean hasSensor() {
+        return useSensor;
+    }
+
+    // ==================== MÉTODOS DE SECUENCIA ====================
+
     /**
      * Genera una secuencia de lanzamiento ordenada por color.
      * Útil para seguir la secuencia de color de la partida.
-     * 
-     * @param colorSequence Array con la secuencia de colores deseada
+     *
+     * @param colorSequence Array con la secuencia de colores deseada (3 elementos)
      * @return Array con índices de slots en orden de lanzamiento, -1 indica slot no disponible
-     * 
+     *
      * Ejemplo:
      * // Secuencia de partida: [PURPLE, YELLOW, YELLOW]
      * // Slots actuales: slot0=YELLOW, slot1=PURPLE, slot2=YELLOW
@@ -493,12 +411,16 @@ public class SpindexerSubsystem extends SubsystemBase {
      * // Resultado: [1, 0, 2] - lanza slot 1 (morada), luego 0 y 2 (amarillas)
      */
     public int[] getColorOrderedSequence(SlotState[] colorSequence) {
+        if (colorSequence.length != 3) {
+            throw new IllegalArgumentException("Color sequence must have exactly 3 elements");
+        }
+
         int[] result = new int[3];
         boolean[] used = new boolean[3];
-        
+
         for (int i = 0; i < colorSequence.length; i++) {
             result[i] = -1;  // Default: no encontrado
-            
+
             // Buscar slot con el color requerido que no haya sido usado
             for (int slotIdx = 0; slotIdx < 3; slotIdx++) {
                 if (!used[slotIdx] && slotStates[slotIdx] == colorSequence[i]) {
@@ -508,95 +430,82 @@ public class SpindexerSubsystem extends SubsystemBase {
                 }
             }
         }
-        
+
         return result;
     }
-    
+
     /**
      * Genera una secuencia de lanzamiento por proximidad.
      * Dispara en orden de menor movimiento del servo desde la posición actual.
-     * 
+     *
      * @return Array con índices de slots en orden de lanzamiento, -1 indica slot vacío
-     * 
+     *
      * Ejemplo:
      * // Si estás en slot 0 y tienes: slot0=YELLOW, slot1=EMPTY, slot2=PURPLE
      * int[] order = spindexer.getProximityOrderedSequence();
-     * // Resultado: [0, 2, -1] - lanza slot 0 primero (ya estás ahí), 
+     * // Resultado: [0, 2, -1] - lanza slot 0 primero (ya estás ahí),
      * // luego slot 2, slot 1 está vacío
      */
     public int[] getProximityOrderedSequence() {
         int[] result = new int[3];
         int resultIdx = 0;
-        
+
         // Empezar desde el slot actual y recorrer circularmente
         for (int offset = 0; offset < 3; offset++) {
             int slotIdx = (currentSlotIndex + offset) % 3;
-            
+
             if (slotStates[slotIdx] != SlotState.EMPTY) {
                 result[resultIdx++] = slotIdx;
             }
         }
-        
+
         // Rellenar con -1 los slots vacíos
         while (resultIdx < 3) {
             result[resultIdx++] = -1;
         }
-        
+
         return result;
     }
-    
-    // ==================== CONFIGURACIÓN ====================
-    
+
     /**
-     * Configura el número de samples para votación.
-     * 
-     * @param samples Número de lecturas (recomendado: 15-25)
+     * Obtiene el índice del primer slot vacío encontrado.
+     * Busca circularmente desde el slot actual.
+     *
+     * @return Índice del primer slot vacío, o -1 si todos están llenos
      */
-    public void setVotingSamples(int samples) {
-        this.votingSamples = Math.max(5, Math.min(50, samples));
+    public int getFirstEmptySlotIndex() {
+        for (int i = 0; i < 3; i++) {
+            int slotIdx = (currentSlotIndex + i) % 3;
+            if (slotStates[slotIdx] == SlotState.EMPTY) {
+                return slotIdx;
+            }
+        }
+        return -1;  // Todos llenos
     }
-    
+
     /**
-     * Configura el delay entre samples durante votación.
-     * 
-     * @param delayMs Delay en milisegundos (recomendado: 30-100)
+     * Obtiene el índice del próximo slot (circularmente).
+     * No verifica si está vacío.
+     *
+     * @return Índice del siguiente slot
      */
-    public void setVotingDelay(int delayMs) {
-        this.votingDelayMs = Math.max(10, Math.min(200, delayMs));
+    public int getNextSlotIndex() {
+        return (currentSlotIndex + 1) % 3;
     }
-    
-    /**
-     * Marca el spindexer como listo para intake.
-     * Llamar después de que el servo complete su movimiento.
-     */
-    public void setReadyForIntake() {
-        currentState = SpindexerState.READY_FOR_INTAKE;
-    }
-    
-    /**
-     * Marca el spindexer como listo para outtake.
-     * Llamar después de que el servo complete su movimiento.
-     */
-    public void setReadyForOuttake() {
-        currentState = SpindexerState.READY_FOR_OUTTAKE;
-    }
-    
+
     // ==================== PERIODIC ====================
-    
+
     @Override
     public void periodic() {
-        // El spindexer no requiere lógica periódica compleja
-        // Los comandos manejan las transiciones de estado
-        
-        // Aquí podrías agregar verificaciones de timeout si es necesario
-        // Por ejemplo, si el servo no llega a posición en X segundos
+        // El spindexer no requiere lógica periódica.
+        // Los comandos manejan las transiciones y verificaciones.
     }
-    
+
     // ==================== TELEMETRÍA ====================
-    
+
     /**
      * Obtiene una cadena con información del estado para telemetría.
-     * 
+     *
      * @return String con estado completo
      */
     public String getTelemetryString() {
@@ -612,11 +521,11 @@ public class SpindexerSubsystem extends SubsystemBase {
         sb.append("Pelotas: ").append(getFilledSlotCount()).append("/3");
         return sb.toString();
     }
-    
+
     /**
      * Obtiene emoji representando el estado de un slot.
      * Útil para telemetría visual.
-     * 
+     *
      * @param slotIndex Índice del slot
      * @return Emoji representando el estado
      */
@@ -630,22 +539,69 @@ public class SpindexerSubsystem extends SubsystemBase {
             default: return "⚫";
         }
     }
-    
+
     /**
      * Obtiene el nombre del estado como String.
-     * 
+     *
      * @return Nombre del estado actual
      */
     public String getStateName() {
         return currentState.name();
     }
-    
+
     // ==================== MÉTODOS PRIVADOS ====================
-    
+
     /**
-     * Obtiene el ángulo de servo para posición de intake.
+     * Lee una única muestra de color del sensor.
+     * Método interno usado por readCurrentColor().
+     *
+     * @return Color detectado en esta lectura
      */
-    private double getIntakeAngle(int slotIndex) {
+    private BallColor readSingleColorSample() {
+        int[] argb = colorSensor.getARGB();
+        double distance = colorSensor.distance();
+
+        // Verificar distancia primero
+        if (distance > SpindexerConstants.BALL_DETECTION_DISTANCE) {
+            return BallColor.NONE;
+        }
+
+        // Calcular porcentajes normalizados
+        int red = argb[1];
+        int green = argb[2];
+        int blue = argb[3];
+        int total = red + green + blue;
+
+        if (total == 0) {
+            return BallColor.UNKNOWN;
+        }
+
+        double redPercent = (red * 100.0) / total;
+        double greenPercent = (green * 100.0) / total;
+        double bluePercent = (blue * 100.0) / total;
+
+        // Verificar amarillo
+        boolean isYellow = redPercent >= SpindexerConstants.YELLOW_RED_MIN &&
+                greenPercent >= SpindexerConstants.YELLOW_GREEN_MIN &&
+                bluePercent <= SpindexerConstants.YELLOW_BLUE_MAX;
+
+        // Verificar púrpura
+        boolean isPurple = redPercent >= SpindexerConstants.PURPLE_RED_MIN &&
+                bluePercent >= SpindexerConstants.PURPLE_BLUE_MIN &&
+                greenPercent <= SpindexerConstants.PURPLE_GREEN_MAX;
+
+        // Retornar resultado
+        if (isYellow && !isPurple) return BallColor.YELLOW;
+        if (isPurple && !isYellow) return BallColor.PURPLE;
+
+        // Ambos o ninguno = desconocido
+        return BallColor.UNKNOWN;
+    }
+
+    /**
+     * Obtiene la posición del servo para intake de un slot.
+     */
+    private double getIntakePosition(int slotIndex) {
         switch (slotIndex) {
             case 0: return SpindexerConstants.SLOT_0_INTAKE_POSITION;
             case 1: return SpindexerConstants.SLOT_1_INTAKE_POSITION;
@@ -653,11 +609,11 @@ public class SpindexerSubsystem extends SubsystemBase {
             default: throw new IllegalArgumentException("Invalid slot index: " + slotIndex);
         }
     }
-    
+
     /**
-     * Obtiene el ángulo de servo para posición de outtake.
+     * Obtiene la posición del servo para outtake de un slot.
      */
-    private double getOuttakeAngle(int slotIndex) {
+    private double getOuttakePosition(int slotIndex) {
         switch (slotIndex) {
             case 0: return SpindexerConstants.SLOT_0_OUTTAKE_POSITION;
             case 1: return SpindexerConstants.SLOT_1_OUTTAKE_POSITION;
@@ -665,40 +621,40 @@ public class SpindexerSubsystem extends SubsystemBase {
             default: throw new IllegalArgumentException("Invalid slot index: " + slotIndex);
         }
     }
-    
+
     /**
      * Valida que el índice de slot sea válido (0, 1, 2).
      */
     private void validateSlotIndex(int slotIndex) {
         if (slotIndex < 0 || slotIndex > 2) {
             throw new IllegalArgumentException(
-                "Invalid slot index: " + slotIndex + ". Must be 0, 1, or 2."
+                    "Invalid slot index: " + slotIndex + ". Must be 0, 1, or 2."
             );
         }
     }
-    
+
     /**
      * Verifica que el sensor esté disponible.
      * Lanza excepción si no lo está.
      */
-    private void requireSensor() {
+    private void ensureSensorAvailable() {
         if (!useSensor) {
             throw new IllegalStateException(
-                "Color sensor not available. " +
-                "Use SpindexerSubsystem(hardwareMap, true) to enable sensor."
+                    "Color sensor not available. " +
+                            "Use SpindexerSubsystem(hardwareMap, true) to enable sensor."
             );
         }
     }
-    
+
     /**
      * Obtiene acceso directo al sensor de color.
      * Útil para lecturas personalizadas o debugging.
-     * 
+     *
      * @return El sensor de color
      * @throws IllegalStateException si el sensor no está disponible
      */
     public SensorRevColorV3 getColorSensor() {
-        requireSensor();
+        ensureSensorAvailable();
         return colorSensor;
     }
 }

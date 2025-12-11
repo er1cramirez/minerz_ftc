@@ -1,226 +1,361 @@
-package org.firstinspires.ftc.teamcode.commands.sequences;
+package org.firstinspires.ftc.teamcode.commands;
 
+import com.qualcomm.robotcore.util.ElapsedTime;
 import com.seattlesolvers.solverslib.command.CommandBase;
 
 import org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.SpindexerSubsystem;
+import org.firstinspires.ftc.teamcode.subsystems.SpindexerSubsystem.SlotState;
+
+import java.util.function.BooleanSupplier;
 
 /**
- * Comando inteligente que coordina Intake + Spindexer para capturar una pelota.
- * 
- * FLUJO AUTOMÁTICO:
- * 1. Verificar que spindexer tenga al menos un slot vacío
- * 2. Mover spindexer al primer slot vacío (posición de intake)
- * 3. Activar intake motor
- * 4. Esperar hasta que sensor detecte pelota (distancia)
- * 5. Detener intake
- * 6. (Opcional) Detectar color y actualizar slot
- * 7. Terminar
- * 
- * MODOS DE OPERACIÓN:
- * - Con detección de color: Identifica y etiqueta la pelota
- * - Sin detección: Solo verifica presencia (más rápido)
- * 
- * ESTADOS:
- * - CHECKING: Verificando disponibilidad
- * - POSITIONING: Moviendo spindexer a slot vacío
- * - INTAKING: Motor activo, esperando pelota
- * - DETECTING: (Opcional) Detectando color
- * - DONE: Completado
- * 
- * SEGURIDAD:
- * - Timeout si pelota no llega
- * - Verifica spindexer en posición antes de activar intake
- * - Detiene intake si es interrumpido
+ * Comando inteligente de intake con ciclo automático y reinicio.
+ *
+ * FLUJO POR CICLO:
+ * 1. Verificar que haya slot vacío disponible
+ * 2. Mover spindexer a posición de intake del slot vacío
+ * 3. Encender intake motor
+ * 4. Esperar hasta detectar pelota (sensor de distancia)
+ * 5. Apagar intake inmediatamente al detectar pelota
+ * 6. Marcar slot como ocupado (UNKNOWN - sin detección de color)
+ * 7. Mover al siguiente slot vacío
+ * 8. Si trigger sigue activo → Reiniciar ciclo
+ *    Si trigger no activo → Finalizar comando
+ *
+ * CARACTERÍSTICAS ESPECIALES:
+ * - Reinicio automático: Mientras el trigger esté presionado, sigue ciclando
+ * - Detección rápida: Apaga intake inmediatamente al detectar pelota
+ * - Sin detección de color: Prioriza velocidad sobre identificación
+ * - Timeout de seguridad: Si pelota no llega en X tiempo, continúa
+ * - Stop automático: Si spindexer está lleno, termina aunque trigger esté activo
+ *
+ * USO TÍPICO:
+ * ```java
+ * // Bind a botón - cicla mientras esté presionado
+ * operatorGamepad.getGamepadButton(GamepadKeys.Button.RIGHT_BUMPER)
+ *     .whenPressed(new SmartIntakeCommand(
+ *         intake,
+ *         spindexer,
+ *         operatorGamepad::getRightBumper  // Trigger
+ *     ));
+ * ```
  */
 public class SmartIntakeCommand extends CommandBase {
-    
-    // Estados internos del comando
+
+    // ==================== ESTADOS INTERNOS ====================
+
     private enum IntakeState {
-        CHECKING,      // Verificando disponibilidad de slots
-        POSITIONING,   // Moviendo spindexer
-        INTAKING,      // Esperando pelota
-        DETECTING,     // Detectando color (opcional)
-        DONE           // Completado
+        CHECKING,       // Verificando disponibilidad de slot vacío
+        POSITIONING,    // Moviendo spindexer a posición de intake
+        INTAKING,       // Motor activo, esperando detección de pelota
+        DETECTED,       // Pelota detectada, apagando intake
+        ROTATING,       // Moviendo al siguiente slot
+        WAITING,        // Esperando antes de verificar reinicio
+        DONE            // Finalizado (trigger no activo o lleno)
     }
-    
+
+    // ==================== DEPENDENCIAS ====================
+
     private final IntakeSubsystem intake;
     private final SpindexerSubsystem spindexer;
-    private final boolean detectColor;
-    private final long intakeTimeoutMs;
-    
-    private IntakeState state;
+    private final BooleanSupplier triggerSupplier;
+
+    // ==================== CONFIGURACIÓN ====================
+
+    private final long intakeTimeoutMs;        // Timeout para detectar pelota
+    private final long positioningDelayMs;     // Delay para que servo llegue a posición
+    private final long rotationDelayMs;        // Delay para rotación entre slots
+    private final long waitBeforeRestartMs;    // Delay antes de verificar reinicio
+
+    // ==================== ESTADO ====================
+
+    private IntakeState currentState;
     private int targetSlot;
-    private long intakeStartTime;
-    
+    private ElapsedTime stateTimer;
+    private int cyclesCompleted;
+
+    // ==================== CONSTRUCTORES ====================
+
     /**
-     * Crea comando de intake sin detección de color.
-     * Más rápido, solo verifica presencia de pelota.
-     * 
+     * Constructor con parámetros por defecto.
+     *
      * @param intake Subsystem de intake
      * @param spindexer Subsystem de spindexer
-     */
-    public SmartIntakeCommand(IntakeSubsystem intake, SpindexerSubsystem spindexer) {
-        this(intake, spindexer, false, 3000);
-    }
-    
-    /**
-     * Crea comando de intake con opción de detección de color.
-     * 
-     * @param intake Subsystem de intake
-     * @param spindexer Subsystem de spindexer
-     * @param detectColor true para detectar y etiquetar color
-     * @param intakeTimeoutMs Timeout en ms para detección de pelota
+     * @param triggerSupplier Supplier que indica si el trigger está activo (ej: botón presionado)
      */
     public SmartIntakeCommand(
-        IntakeSubsystem intake, 
-        SpindexerSubsystem spindexer,
-        boolean detectColor,
-        long intakeTimeoutMs
+            IntakeSubsystem intake,
+            SpindexerSubsystem spindexer,
+            BooleanSupplier triggerSupplier
+    ) {
+        this(intake, spindexer, triggerSupplier, 3000, 400, 300, 150);
+    }
+
+    /**
+     * Constructor con parámetros personalizables.
+     *
+     * @param intake Subsystem de intake
+     * @param spindexer Subsystem de spindexer
+     * @param triggerSupplier Supplier que indica si el trigger está activo
+     * @param intakeTimeoutMs Timeout para detectar pelota (ms)
+     * @param positioningDelayMs Delay para que servo llegue a posición (ms)
+     * @param rotationDelayMs Delay para rotación entre slots (ms)
+     * @param waitBeforeRestartMs Delay antes de verificar reinicio (ms)
+     */
+    public SmartIntakeCommand(
+            IntakeSubsystem intake,
+            SpindexerSubsystem spindexer,
+            BooleanSupplier triggerSupplier,
+            long intakeTimeoutMs,
+            long positioningDelayMs,
+            long rotationDelayMs,
+            long waitBeforeRestartMs
     ) {
         this.intake = intake;
         this.spindexer = spindexer;
-        this.detectColor = detectColor;
+        this.triggerSupplier = triggerSupplier;
         this.intakeTimeoutMs = intakeTimeoutMs;
-        
+        this.positioningDelayMs = positioningDelayMs;
+        this.rotationDelayMs = rotationDelayMs;
+        this.waitBeforeRestartMs = waitBeforeRestartMs;
+
+        this.stateTimer = new ElapsedTime();
+
         addRequirements(intake, spindexer);
     }
-    
+
+    // ==================== LIFECYCLE ====================
+
     @Override
     public void initialize() {
-        state = IntakeState.CHECKING;
+        currentState = IntakeState.CHECKING;
         targetSlot = -1;
-        intakeStartTime = 0;
+        cyclesCompleted = 0;
+        stateTimer.reset();
     }
-    
+
     @Override
     public void execute() {
-        switch (state) {
+        switch (currentState) {
             case CHECKING:
                 handleChecking();
                 break;
-                
+
             case POSITIONING:
                 handlePositioning();
                 break;
-                
+
             case INTAKING:
                 handleIntaking();
                 break;
-                
-            case DETECTING:
-                // La detección se maneja en el subcomando
-                // Este estado es placeholder para cuando usemos
-                // un SequentialCommandGroup en versión avanzada
+
+            case DETECTED:
+                handleDetected();
                 break;
-                
+
+            case ROTATING:
+                handleRotating();
+                break;
+
+            case WAITING:
+                handleWaiting();
+                break;
+
             case DONE:
-                // Nada que hacer
+                // Nada que hacer, esperando isFinished()
                 break;
         }
     }
-    
+
     @Override
     public boolean isFinished() {
-        return state == IntakeState.DONE;
+        return currentState == IntakeState.DONE;
     }
-    
+
     @Override
     public void end(boolean interrupted) {
-        // Siempre detener intake al terminar
+        // SIEMPRE apagar intake al terminar
         intake.stop();
-        
+
         if (interrupted && targetSlot >= 0) {
-            // Si fue interrumpido, marcar slot como UNKNOWN
-            spindexer.setSlotState(targetSlot, SpindexerSubsystem.SlotState.UNKNOWN);
+            // Si fue interrumpido en medio de intake, marcar slot como UNKNOWN
+            // por si acaso había algo entrando
+            if (currentState == IntakeState.INTAKING) {
+                spindexer.setSlotState(targetSlot, SlotState.UNKNOWN);
+            }
         }
     }
-    
+
     // ==================== MANEJADORES DE ESTADO ====================
-    
+
+    /**
+     * Estado CHECKING: Verificar si hay slot vacío disponible.
+     */
     private void handleChecking() {
-        // Verificar si hay slot vacío
+        // Verificar si spindexer está lleno
         if (!spindexer.hasEmptySlot()) {
-            // No hay espacio, terminar inmediatamente
-            state = IntakeState.DONE;
+            // No hay espacio, terminar
+            currentState = IntakeState.DONE;
             return;
         }
-        
+
         // Obtener primer slot vacío
         targetSlot = spindexer.getFirstEmptySlotIndex();
-        
+
         if (targetSlot < 0) {
             // Esto no debería pasar, pero por seguridad
-            state = IntakeState.DONE;
+            currentState = IntakeState.DONE;
             return;
         }
-        
+
         // Mover spindexer a posición de intake del slot vacío
         spindexer.moveToIntakePosition(targetSlot);
-        state = IntakeState.POSITIONING;
+        transitionTo(IntakeState.POSITIONING);
     }
-    
+
+    /**
+     * Estado POSITIONING: Esperar a que servo llegue a posición.
+     */
     private void handlePositioning() {
-        // Esperar a que spindexer esté en posición
-        // En un robot real, podrías verificar tiempo transcurrido
-        // o usar encoders del servo si están disponibles
-        
-        // Por simplicidad, asumimos que después de un ciclo
-        // el servo ya se está moviendo y podemos empezar intake
-        if (spindexer.isAtIntake()) {
-            // Activar intake
-            intake.intake();
-            intakeStartTime = System.currentTimeMillis();
-            state = IntakeState.INTAKING;
+        // Esperar tiempo configurado para que servo llegue a posición
+        if (stateTimer.milliseconds() >= positioningDelayMs) {
+            // Verificar que realmente esté en posición de intake
+            if (spindexer.isAtIntake()) {
+                // Activar intake motor
+                intake.intake();
+                transitionTo(IntakeState.INTAKING);
+            } else {
+                // Si no está en posición después del delay, algo salió mal
+                // Intentar de nuevo
+                spindexer.moveToIntakePosition(targetSlot);
+                stateTimer.reset();
+            }
         }
     }
-    
+
+    /**
+     * Estado INTAKING: Esperando detección de pelota.
+     */
     private void handleIntaking() {
         // Verificar si sensor detecta pelota
         if (spindexer.isBallDetected()) {
-            // ¡Pelota detectada!
+            // ¡Pelota detectada! Apagar intake INMEDIATAMENTE
             intake.stop();
-            
-            if (detectColor) {
-                // Si queremos detección de color, la versión completa
-                // usaría un SequentialCommandGroup con DetectBallColorCommand
-                // Por ahora, simplemente marcamos como UNKNOWN
-                spindexer.setSlotState(targetSlot, SpindexerSubsystem.SlotState.UNKNOWN);
-            } else {
-                // Sin detección, marcamos como UNKNOWN (hay algo pero no sabemos qué)
-                spindexer.setSlotState(targetSlot, SpindexerSubsystem.SlotState.UNKNOWN);
-            }
-            
-            state = IntakeState.DONE;
+
+            // Marcar slot como ocupado (UNKNOWN porque no detectamos color)
+            spindexer.setSlotState(targetSlot, SlotState.UNKNOWN);
+
+            transitionTo(IntakeState.DETECTED);
             return;
         }
-        
+
         // Verificar timeout
-        long elapsed = System.currentTimeMillis() - intakeStartTime;
-        if (elapsed >= intakeTimeoutMs) {
+        if (stateTimer.milliseconds() >= intakeTimeoutMs) {
             // Timeout - pelota no llegó
+            // Apagar intake y continuar (no bloquear el flujo)
             intake.stop();
-            state = IntakeState.DONE;
+            transitionTo(IntakeState.DETECTED);
         }
     }
-    
-    // ==================== MÉTODOS DE CONSULTA ====================
-    
+
     /**
-     * Verifica si el intake fue exitoso (pelota detectada).
-     * Solo válido después de que el comando termine.
+     * Estado DETECTED: Pelota detectada, preparar para siguiente slot.
      */
-    public boolean wasSuccessful() {
-        return state == IntakeState.DONE && 
-               targetSlot >= 0 && 
-               !spindexer.isSlotEmpty(targetSlot);
+    private void handleDetected() {
+        // Incrementar contador de ciclos
+        cyclesCompleted++;
+
+        // Mover al siguiente slot vacío
+        // Si no hay más slots vacíos, esto no hará nada
+        int nextSlot = spindexer.getFirstEmptySlotIndex();
+
+        if (nextSlot >= 0) {
+            // Hay siguiente slot vacío, mover ahí
+            spindexer.moveToIntakePosition(nextSlot);
+            transitionTo(IntakeState.ROTATING);
+        } else {
+            // No hay más slots vacíos, spindexer está lleno
+            transitionTo(IntakeState.DONE);
+        }
     }
-    
+
     /**
-     * Obtiene el slot donde se guardó la pelota.
-     * Retorna -1 si no se guardó nada.
+     * Estado ROTATING: Esperando a que servo complete rotación.
      */
-    public int getTargetSlot() {
+    private void handleRotating() {
+        // Esperar a que servo complete la rotación
+        if (stateTimer.milliseconds() >= rotationDelayMs) {
+            transitionTo(IntakeState.WAITING);
+        }
+    }
+
+    /**
+     * Estado WAITING: Verificar si debe reiniciar o terminar.
+     */
+    private void handleWaiting() {
+        // Pequeño delay antes de verificar reinicio
+        // (Evita reinicio inmediato si el botón se suelta muy rápido)
+        if (stateTimer.milliseconds() >= waitBeforeRestartMs) {
+
+            // Verificar si trigger sigue activo
+            if (triggerSupplier.getAsBoolean()) {
+                // Trigger activo → Reiniciar ciclo
+                transitionTo(IntakeState.CHECKING);
+            } else {
+                // Trigger no activo → Finalizar
+                transitionTo(IntakeState.DONE);
+            }
+        }
+    }
+
+    // ==================== HELPERS ====================
+
+    /**
+     * Transición a un nuevo estado con reset del timer.
+     */
+    private void transitionTo(IntakeState newState) {
+        currentState = newState;
+        stateTimer.reset();
+    }
+
+    // ==================== MÉTODOS DE CONSULTA ====================
+
+    /**
+     * Obtiene el número de ciclos completados.
+     * Un ciclo = intake de una pelota.
+     *
+     * @return Número de ciclos completados
+     */
+    public int getCyclesCompleted() {
+        return cyclesCompleted;
+    }
+
+    /**
+     * Obtiene el slot actual donde está trabajando.
+     * Retorna -1 si no hay slot target.
+     *
+     * @return Índice del slot actual
+     */
+    public int getCurrentTargetSlot() {
         return targetSlot;
+    }
+
+    /**
+     * Verifica si el comando está activamente intaking.
+     *
+     * @return true si el motor está encendido esperando pelota
+     */
+    public boolean isActivelyIntaking() {
+        return currentState == IntakeState.INTAKING;
+    }
+
+    /**
+     * Obtiene el estado interno actual (para debugging/telemetría).
+     *
+     * @return Nombre del estado actual
+     */
+    public String getCurrentStateName() {
+        return currentState.name();
     }
 }

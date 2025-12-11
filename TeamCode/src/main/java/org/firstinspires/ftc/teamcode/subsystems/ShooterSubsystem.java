@@ -6,12 +6,6 @@ import com.seattlesolvers.solverslib.hardware.motors.MotorEx;
 
 import org.firstinspires.ftc.teamcode.constants.ShooterConstants;
 
-/**
- * Subsystem que controla el flywheel shooter.
- *
- * IMPORTANTE: El motor necesita recibir setVelocity() cada ciclo
- * para mantener control estable (igual que en FlywheelTuning).
- */
 public class ShooterSubsystem extends SubsystemBase {
 
     public enum ShooterState {
@@ -22,14 +16,10 @@ public class ShooterSubsystem extends SubsystemBase {
         SPIN_UP_FAR
     }
 
-    // ===== HARDWARE =====
     private final MotorEx flywheel;
-
-    // ===== ESTADO =====
     private ShooterState currentState;
     private double targetRpm;
 
-    // ===== CONSTRUCTOR =====
     public ShooterSubsystem(HardwareMap hardwareMap) {
         this(hardwareMap, ShooterConstants.FLYWHEEL_NAME);
     }

@@ -7,9 +7,14 @@ import com.seattlesolvers.solverslib.hardware.motors.MotorEx;
 
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.teamcode.constants.IntakeConstants;
-import org.firstinspires.ftc.teamcode.constants.IntakeConstants.IntakeState; 
 
 public class IntakeSubsystem extends SubsystemBase {
+
+    public enum IntakeState {
+        IDLE,      // Motor detenido
+        INTAKING,  // Motor hacia adentro
+        OUTTAKING  // Motor hacia afuera (expulsar)
+    }
     
     // Hardware
     private final MotorEx intakeMotor;
@@ -55,7 +60,4 @@ public class IntakeSubsystem extends SubsystemBase {
         return intakeMotor.getCurrent(CurrentUnit.AMPS);
     }
     
-    @Override
-    public void periodic() {
-    }
 }

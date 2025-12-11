@@ -261,18 +261,7 @@ public class IntegratedDriveTest extends CommandOpMode {
             spindexer.moveToOuttakePosition(spindexer.getCurrentSlotIndex());
         }
         lastDpadDown = gamepad2.dpad_down;
-        
-        // DPAD RIGHT: Siguiente slot
-        if (gamepad2.dpad_right && !lastDpadRight) {
-            spindexer.moveToNextIntakeSlot();
-        }
-        lastDpadRight = gamepad2.dpad_right;
-        
-        // DPAD LEFT: Slot vacío más cercano
-        if (gamepad2.dpad_left && !lastDpadLeft) {
-            spindexer.moveToClosestEmptySlot();
-        }
-        lastDpadLeft = gamepad2.dpad_left;
+
         
         // === SELECCIÓN DE SLOT ===
         
