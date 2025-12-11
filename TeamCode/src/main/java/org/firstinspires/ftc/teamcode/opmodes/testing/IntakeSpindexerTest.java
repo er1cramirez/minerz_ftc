@@ -6,6 +6,7 @@ import com.seattlesolvers.solverslib.command.CommandOpMode;
 import org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.SpindexerSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.SpindexerSubsystem.SlotState;
+import org.firstinspires.ftc.teamcode.subsystems.EjectorSubsystem;
 
 /**
  * OpMode de testing para Intake + Spindexer integrados.
@@ -28,6 +29,9 @@ import org.firstinspires.ftc.teamcode.subsystems.SpindexerSubsystem.SlotState;
  * - RIGHT BUMPER: Marcar slot actual como PURPLE
  * - LEFT BUMPER: Limpiar slot actual (EMPTY)
  * 
+ * CONTROLES - EJECTOR:
+ * - Back/Select: Ejecutar eyección (EJECT → STOW automático)
+ * 
  * WORKFLOW SUGERIDO:
  * 1. Mover spindexer a posición de intake (DPAD UP o DPAD LEFT para slot vacío)
  * 2. Activar intake con RT
@@ -48,6 +52,7 @@ IntakeSpindexerTest extends CommandOpMode {
     
     private IntakeSubsystem intake;
     private SpindexerSubsystem spindexer;
+    private EjectorSubsystem ejector;
     
     // Control de botones (debouncing)
     private boolean lastDpadUp = false;
@@ -60,6 +65,7 @@ IntakeSpindexerTest extends CommandOpMode {
     private boolean lastX = false;
     private boolean lastRightBumper = false;
     private boolean lastLeftBumper = false;
+    private boolean lastBack = false;
     
     // Alertas de seguridad
     private boolean showRotationWarning = false;
@@ -69,10 +75,12 @@ IntakeSpindexerTest extends CommandOpMode {
         // Crear subsistemas
         intake = new IntakeSubsystem(hardwareMap);
         spindexer = new SpindexerSubsystem(hardwareMap, false);  // Sin sensor
+        ejector = new EjectorSubsystem();
         
         // Registrar subsistemas
         register(intake);
         register(spindexer);
+        register(ejector);
         
         telemetry.addLine("Intake + Spindexer Test");
         telemetry.addLine();
@@ -87,6 +95,9 @@ IntakeSpindexerTest extends CommandOpMode {
         telemetry.addLine();
         telemetry.addLine("LABELING:");
         telemetry.addLine("  X: Yellow  |  RB: Purple  |  LB: Empty");
+        telemetry.addLine();
+        telemetry.addLine("EJECTOR:");
+        telemetry.addLine("  Back: Eject (auto return)");
         telemetry.update();
     }
     
@@ -97,6 +108,7 @@ IntakeSpindexerTest extends CommandOpMode {
         // Controles manuales
         handleIntakeControls();
         handleSpindexerControls();
+        handleEjectorControls();
         
         // Verificar condiciones de seguridad
         checkSafety();
@@ -187,6 +199,16 @@ IntakeSpindexerTest extends CommandOpMode {
         lastLeftBumper = gamepad1.left_bumper;
     }
     
+    private void handleEjectorControls() {
+        // BACK/SELECT: Ejecutar comando completo (EJECT → STOW)
+        if (gamepad1.back && !lastBack) {
+            ejector.eject();
+            // Inmediatamente pasar a stow
+            ejector.stow();
+        }
+        lastBack = gamepad1.back;
+    }
+    
     private void checkSafety() {
         // ADVERTENCIA: No rotar spindexer mientras intake está activo
         // Esto podría dañar mecanismos o atascar pelotas
@@ -239,6 +261,13 @@ IntakeSpindexerTest extends CommandOpMode {
         telemetry.addData("Position", "%s | %s",
                          spindexer.isInIntakePosition() ? "✓ Intake" : "✗ Intake",
                          spindexer.isInOuttakePosition() ? "✓ Outtake" : "✗ Outtake");
+        telemetry.addLine();
+        
+        // === EJECTOR ===
+        telemetry.addLine("--- EJECTOR ---");
+        telemetry.addData("State", ejector.getState().name());
+        telemetry.addData("Is Stowed", ejector.isStowed() ? "✓ Stowed" : "✗ Not Stowed");
+        telemetry.addData("Control", "Back button to eject");
         
         // === WORKFLOW SUGERIDO ===
         telemetry.addLine();

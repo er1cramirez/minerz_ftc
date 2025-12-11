@@ -48,7 +48,7 @@ public class SpindexerConstants {
      * CALIBRAR: Usa SpindexerSensorCalibration para determinar valor óptimo.
      * Valor inicial basado en sensor a 3-4cm de la pelota.
      */
-    public static final double BALL_DETECTION_DISTANCE = 5.0;
+    public static final double BALL_DETECTION_DISTANCE = 3.89;
 
     // ==================== UMBRALES DE COLOR ====================
 
@@ -66,15 +66,15 @@ public class SpindexerConstants {
 
     // Umbrales para AMARILLO
     // Amarillo típicamente tiene: alto rojo, alto verde, bajo azul
-    public static final double YELLOW_RED_MIN = 35.0;      // Rojo mínimo %
-    public static final double YELLOW_GREEN_MIN = 35.0;    // Verde mínimo %
-    public static final double YELLOW_BLUE_MAX = 25.0;     // Azul máximo %
+    public static final double YELLOW_RED_MIN = 21.53;      // Rojo mínimo %
+    public static final double YELLOW_GREEN_MIN = 43.86;    // Verde mínimo %
+    public static final double YELLOW_BLUE_MAX = 29.05;     // Azul máximo %
 
     // Umbrales para PÚRPURA
     // Púrpura típicamente tiene: alto azul, algo de rojo, bajo verde
-    public static final double PURPLE_RED_MIN = 30.0;      // Rojo mínimo %
-    public static final double PURPLE_BLUE_MIN = 40.0;     // Azul mínimo %
-    public static final double PURPLE_GREEN_MAX = 30.0;    // Verde máximo %
+    public static final double PURPLE_RED_MIN = 14.80;      // Rojo mínimo %
+    public static final double PURPLE_BLUE_MIN = 33.80;     // Azul mínimo %
+    public static final double PURPLE_GREEN_MAX = 42.78 ;    // Verde máximo %
 
     // ==================== CONFIGURACIÓN DE DETECCIÓN ====================
 

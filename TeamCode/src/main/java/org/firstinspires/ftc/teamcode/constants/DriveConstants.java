@@ -38,7 +38,7 @@ public class DriveConstants {
     /**
      * Velocidad lenta/precisión
      */
-    public static final double SLOW_SPEED = 0.4;
+    public static final double SLOW_SPEED = 0.25;
     
     // ========== DRIVE MODES ==========
     /**

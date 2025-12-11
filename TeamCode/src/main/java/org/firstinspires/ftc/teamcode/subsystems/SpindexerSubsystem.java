@@ -750,4 +750,16 @@ public class SpindexerSubsystem extends SubsystemBase {
             );
         }
     }
+    
+    /**
+     * Obtiene acceso directo al sensor de color.
+     * Útil para lecturas personalizadas o debugging.
+     * 
+     * @return El sensor de color
+     * @throws IllegalStateException si el sensor no está disponible
+     */
+    public SensorRevColorV3 getColorSensor() {
+        requireSensor();
+        return colorSensor;
+    }
 }
