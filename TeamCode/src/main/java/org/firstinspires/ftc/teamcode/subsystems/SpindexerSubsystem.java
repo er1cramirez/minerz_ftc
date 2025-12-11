@@ -12,33 +12,7 @@ import org.firstinspires.ftc.teamcode.constants.SpindexerConstants;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Subsystem del Spindexer - Sistema rotativo de 3 slots para almacenar pelotas.
- * 
- * HARDWARE:
- * - Servo goBILDA 300° para rotación
- * - Sensor REV Color v3 (opcional) para detección automática
- * 
- * POSICIONES:
- * - Cada slot tiene 2 posiciones: INTAKE (0°, 120°, 240°) y OUTTAKE (60°, 180°, 300°)
- * - Sensor fijo detecta pelotas en posición de intake
- * 
- * ESTADOS:
- * - IDLE: En reposo
- * - MOVING_TO_INTAKE: Rotando a posición de intake
- * - READY_FOR_INTAKE: En posición, esperando pelota
- * - DETECTING_BALL: Leyendo sensor
- * - MOVING_TO_OUTTAKE: Rotando a posición de outtake
- * - READY_FOR_OUTTAKE: En posición de outtake, listo para lanzar
- * 
- * DETECCIÓN:
- * - Sistema de votación: toma N lecturas y el color con más votos gana
- * - Maneja errores: si no detecta claramente, marca como UNKNOWN
- * 
- * DEPENDENCIAS:
- * - IntakeSubsystem debe estar detenido antes de rotar
- * - ShooterSubsystem debe confirmar ready antes de outtake
- */
+
 public class SpindexerSubsystem extends SubsystemBase {
     
     // ==================== ENUMS ====================
@@ -78,27 +52,15 @@ public class SpindexerSubsystem extends SubsystemBase {
     private final SensorRevColorV3 colorSensor;
     private final boolean useSensor;
     
-    // ==================== ESTADO ====================
-    
     private SpindexerState currentState;
     private SlotState[] slotStates;      // Estado de cada uno de los 3 slots
     private int currentSlotIndex;        // Slot actualmente en posición (0, 1, 2)
     
-    // ==================== DETECCIÓN ====================
-    
     private final ElapsedTime detectionTimer;
     private List<BallColor> detectionVotes;
-    private int votingSamples = 20;      // Número de lecturas para votación
+    private int votingSamples = 15;      // Número de lecturas para votación
     private int votingDelayMs = 50;      // Delay entre lecturas
     
-    // ==================== CONSTRUCTORES ====================
-    
-    /**
-     * Constructor básico - sin sensor de color.
-     * Requiere etiquetado manual de slots.
-     * 
-     * @param hardwareMap El hardware map del OpMode
-     */
     public SpindexerSubsystem(HardwareMap hardwareMap) {
         this(hardwareMap, false);
     }
@@ -143,20 +105,8 @@ public class SpindexerSubsystem extends SubsystemBase {
         // Inicializar detección
         detectionTimer = new ElapsedTime();
         detectionVotes = new ArrayList<>();
-        
-        // Posición inicial: slot 0 en intake
-        // NOTA: En autonomous con precarga, llamar configurePreload() 
-        // y moveToOuttakePosition() antes de usar
-        moveToIntakePosition(0);
     }
     
-    // ==================== MÉTODOS DE MOVIMIENTO ====================
-    
-    /**
-     * Mueve el spindexer a la posición de intake del slot especificado.
-     * 
-     * @param slotIndex Índice del slot (0, 1, 2)
-     */
     public void moveToIntakePosition(int slotIndex) {
         validateSlotIndex(slotIndex);
         double angle = getIntakeAngle(slotIndex);
@@ -165,11 +115,6 @@ public class SpindexerSubsystem extends SubsystemBase {
         currentState = SpindexerState.MOVING_TO_INTAKE;
     }
     
-    /**
-     * Mueve el spindexer a la posición de outtake del slot especificado.
-     * 
-     * @param slotIndex Índice del slot (0, 1, 2)
-     */
     public void moveToOuttakePosition(int slotIndex) {
         validateSlotIndex(slotIndex);
         double angle = getOuttakeAngle(slotIndex);
@@ -178,9 +123,6 @@ public class SpindexerSubsystem extends SubsystemBase {
         currentState = SpindexerState.MOVING_TO_OUTTAKE;
     }
     
-    /**
-     * Mueve al siguiente slot en posición de intake (rotación circular).
-     */
     public void moveToNextIntakeSlot() {
         currentSlotIndex = (currentSlotIndex + 1) % 3;
         moveToIntakePosition(currentSlotIndex);
@@ -200,9 +142,6 @@ public class SpindexerSubsystem extends SubsystemBase {
         }
         // No hay slots vacíos, permanecer en actual
     }
-    
-    // ==================== DETECCIÓN DE PELOTA ====================
-    
     /**
      * Verifica si hay una pelota presente frente al sensor.
      * 

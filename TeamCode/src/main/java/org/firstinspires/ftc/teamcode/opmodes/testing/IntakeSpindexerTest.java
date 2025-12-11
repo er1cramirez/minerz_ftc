@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.opmodes.testing;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.seattlesolvers.solverslib.command.CommandOpMode;
 
+import org.firstinspires.ftc.teamcode.constants.EjectorConstants;
 import org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.SpindexerSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.SpindexerSubsystem.SlotState;
@@ -75,7 +76,7 @@ IntakeSpindexerTest extends CommandOpMode {
         // Crear subsistemas
         intake = new IntakeSubsystem(hardwareMap);
         spindexer = new SpindexerSubsystem(hardwareMap, false);  // Sin sensor
-        ejector = new EjectorSubsystem();
+        ejector = new EjectorSubsystem(hardwareMap, EjectorConstants.SERVO_NAME);
         
         // Registrar subsistemas
         register(intake);

@@ -13,6 +13,7 @@ import org.firstinspires.ftc.teamcode.subsystems.DriveSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.SpindexerSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.SpindexerSubsystem.SlotState;
+import org.firstinspires.ftc.teamcode.subsystems.EjectorSubsystem;
 
 /**
  * OpMode de Testing Integrado - Drive + Intake + Spindexer
@@ -53,6 +54,9 @@ import org.firstinspires.ftc.teamcode.subsystems.SpindexerSubsystem.SlotState;
  * NOTA: En modo MANUAL, el sensor sigue mostrando el color detectado
  *       en la telemetría, pero requiere confirmación manual para etiquetar.
  * 
+ * EJECTOR:
+ * - Back: Ejecutar eyección (EJECT → STOW automático)
+ * 
  * ═══════════════════════════════════════════════════════════════════
  * WORKFLOW RECOMENDADO:
  * ═══════════════════════════════════════════════════════════════════
@@ -85,6 +89,7 @@ public class IntegratedDriveTest extends CommandOpMode {
     private DriveSubsystem drive;
     private IntakeSubsystem intake;
     private SpindexerSubsystem spindexer;
+    private EjectorSubsystem ejector;
     
     // ==================== COMMANDS ====================
     private TeleOpDriveCommand driveCommand;
@@ -112,6 +117,7 @@ public class IntegratedDriveTest extends CommandOpMode {
     private boolean lastRightBumper = false;
     private boolean lastLeftBumper = false;
     private boolean lastStart = false;
+    private boolean lastBack = false;
     
     // Alertas
     private boolean showRotationWarning = false;
@@ -128,6 +134,7 @@ public class IntegratedDriveTest extends CommandOpMode {
         // Inicializar subsistemas
         drive = new DriveSubsystem(follower);
         intake = new IntakeSubsystem(hardwareMap);
+        ejector = new EjectorSubsystem(hardwareMap);
         
         // Intentar inicializar spindexer con sensor
         try {
@@ -145,6 +152,7 @@ public class IntegratedDriveTest extends CommandOpMode {
         register(drive);
         register(intake);
         register(spindexer);
+        register(ejector);
         
         // Inicializar gamepads
         driverGamepad = new GamepadEx(gamepad1);
@@ -210,6 +218,7 @@ public class IntegratedDriveTest extends CommandOpMode {
         // Controles del operator (mecanismos)
         handleIntakeControls();
         handleSpindexerControls();
+        handleEjectorControls();
         
         // Actualizar lectura del sensor (si está disponible)
         updateSensorReading();
@@ -335,6 +344,17 @@ public class IntegratedDriveTest extends CommandOpMode {
             }
         }
         lastStart = gamepad2.start;
+    }
+    
+    // ==================== EJECTOR CONTROLS ====================
+    
+    private void handleEjectorControls() {
+        // BACK: Ejecutar comando completo (EJECT → STOW automático)
+        if (gamepad2.back && !lastBack) {
+            // Usar el método integrado que maneja el ciclo automáticamente
+            ejector.ejectAndStow();
+        }
+        lastBack = gamepad2.back;
     }
     
     // ==================== SENSOR READING ====================
@@ -489,6 +509,19 @@ public class IntegratedDriveTest extends CommandOpMode {
         telemetry.addLine("└──────────────────────────────┘");
         telemetry.addLine();
         
+        // ===== EJECTOR STATUS =====
+        telemetry.addLine("┌─ EJECTOR ────────────────────┐");
+        telemetry.addData("│ State", getEjectorEmoji() + " " + ejector.getState().name());
+        telemetry.addData("│ Is Stowed", ejector.isStowed() ? "✅ Yes" : "❌ No");
+        if (ejector.isCycleInProgress()) {
+            telemetry.addData("│ Cycle Progress", "%.0f / %.0f ms", 
+                            ejector.getCycleElapsedMs(),
+                            org.firstinspires.ftc.teamcode.constants.EjectorConstants.Timing.FULL_CYCLE_TIME_MS);
+        }
+        telemetry.addData("│ Control", "Back button to eject");
+        telemetry.addLine("└──────────────────────────────┘");
+        telemetry.addLine();
+        
         // ===== WORKFLOW HINTS =====
         telemetry.addLine("┌─ NEXT STEPS ─────────────────┐");
         if (spindexer.areAllSlotsFull()) {
@@ -535,6 +568,18 @@ public class IntegratedDriveTest extends CommandOpMode {
             case IDLE:
             default:
                 return "⏸️";
+        }
+    }
+    
+    private String getEjectorEmoji() {
+        switch (ejector.getState()) {
+            case EJECTING:
+                return "🚀";
+            case RETURNING:
+                return "↩️";
+            case STOWED:
+            default:
+                return "📦";
         }
     }
 }

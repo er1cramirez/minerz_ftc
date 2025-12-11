@@ -3,11 +3,10 @@ package org.firstinspires.ftc.teamcode.opmodes.testing;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.seattlesolvers.solverslib.command.CommandOpMode;
 import com.seattlesolvers.solverslib.command.InstantCommand;
-import com.seattlesolvers.solverslib.command.SequentialCommandGroup;
-import com.seattlesolvers.solverslib.command.WaitCommand;
 
 import org.firstinspires.ftc.teamcode.subsystems.EjectorSubsystem;
-import org.firstinspires.ftc.teamcode.constants.EjectorConstants.EjectorState;
+import org.firstinspires.ftc.teamcode.commands.EjectCycleCommand;
+import org.firstinspires.ftc.teamcode.constants.EjectorConstants;
 
 /**
  * OpMode de testing para calibrar y probar el subsistema Ejector.
@@ -51,13 +50,13 @@ public class EjectorTest extends CommandOpMode {
     // Variables de calibración manual
     private double manualPosition = 0.0;
     private boolean manualMode = false;
-    private double savedStowPosition = org.firstinspires.ftc.teamcode.constants.EjectorConstants.STOW_POSITION;
-    private double savedEjectPosition = org.firstinspires.ftc.teamcode.constants.EjectorConstants.EJECT_POSITION;
+    private double savedStowPosition = EjectorConstants.Positions.STOW_POSITION;
+    private double savedEjectPosition = EjectorConstants.Positions.EJECT_POSITION;
     
     @Override
     public void initialize() {
         // Crear subsistema
-        ejector = new EjectorSubsystem();
+        ejector = new EjectorSubsystem(hardwareMap);
         
         // Registrar subsistema
         register(ejector);
@@ -93,19 +92,12 @@ public class EjectorTest extends CommandOpMode {
     }
     
     private void handleTestingControls() {
-        // A: Comando completo - EJECT y luego STOW automáticamente
+        // A: Comando completo - EJECT y luego STOW automáticamente usando el comando
         if (gamepad1.a && !lastA) {
-            manualMode = false; 
-            // Crear secuencia de comandos: EJECT -> esperar 500ms -> STOW
-            new SequentialCommandGroup(
-                new InstantCommand(() -> ejector.eject()),
-                new WaitCommand(500),
-                new InstantCommand(() -> ejector.stow())
-            ).schedule();
+            manualMode = false;
+            new EjectCycleCommand(ejector).schedule();
         }
-        lastA = gamepad1.a;
-        
-        // B: Solo EJECT
+        lastA = gamepad1.a;        // B: Solo EJECT
         if (gamepad1.b && !lastB) {
             manualMode = false;
             ejector.eject();
@@ -168,13 +160,7 @@ public class EjectorTest extends CommandOpMode {
     
     private void setManualPosition(double position) {
         // Acceso directo al servo para testing manual
-        // Nota: Esto requeriría acceso al ServoEx desde el subsistema
-        // Por ahora, usamos los métodos del subsistema
-        if (position > 0.5) {
-            ejector.eject();
-        } else {
-            ejector.stow();
-        }
+        ejector.setPosition(position);
     }
     
     private void updateTelemetry() {
@@ -198,10 +184,10 @@ public class EjectorTest extends CommandOpMode {
         }
         telemetry.addData("STOW Position", "%.3f %s", 
                          savedStowPosition,
-                         savedStowPosition == org.firstinspires.ftc.teamcode.constants.EjectorConstants.STOW_POSITION ? "(default)" : "(custom)");
+                         savedStowPosition == EjectorConstants.Positions.STOW_POSITION ? "(default)" : "(custom)");
         telemetry.addData("EJECT Position", "%.3f %s", 
                          savedEjectPosition,
-                         savedEjectPosition == org.firstinspires.ftc.teamcode.constants.EjectorConstants.EJECT_POSITION ? "(default)" : "(custom)");
+                         savedEjectPosition == EjectorConstants.Positions.EJECT_POSITION ? "(default)" : "(custom)");
         telemetry.addLine();
         
         // === INSTRUCCIONES ===
@@ -223,8 +209,8 @@ public class EjectorTest extends CommandOpMode {
         telemetry.addLine();
         
         // === NOTAS DE CALIBRACIÓN ===
-        if (savedStowPosition != org.firstinspires.ftc.teamcode.constants.EjectorConstants.STOW_POSITION ||
-            savedEjectPosition != org.firstinspires.ftc.teamcode.constants.EjectorConstants.EJECT_POSITION) {
+        if (savedStowPosition != EjectorConstants.Positions.STOW_POSITION ||
+            savedEjectPosition != EjectorConstants.Positions.EJECT_POSITION) {
             telemetry.addLine("--- CALIBRATION NOTES ---");
             telemetry.addLine("⚠️ Custom positions detected!");
             telemetry.addLine("Update EjectorConstants.java with:");

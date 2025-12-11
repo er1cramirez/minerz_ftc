@@ -84,8 +84,6 @@ public class ShooterSubsystem extends SubsystemBase {
         targetRpm = ShooterConstants.FAR_VELOCITY;
     }
 
-    // ===== MÉTODOS DE CONSULTA =====
-
     public ShooterState getState() {
         return currentState;
     }
