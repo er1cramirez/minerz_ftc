@@ -3,9 +3,11 @@ package org.firstinspires.ftc.teamcode.commands.sequences;
 import com.seattlesolvers.solverslib.command.SequentialCommandGroup;
 import com.seattlesolvers.solverslib.command.WaitCommand;
 import com.seattlesolvers.solverslib.command.InstantCommand;
+import com.seattlesolvers.solverslib.command.WaitUntilCommand;
 import org.firstinspires.ftc.teamcode.commands.ejector.EjectCycleCommand;
 import org.firstinspires.ftc.teamcode.subsystems.EjectorSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.SpindexerSubsystem;
+import org.firstinspires.ftc.teamcode.subsystems.ShooterSubsystem;
 
 /**
  * Automates shooting 3 balls with delays.
@@ -14,7 +16,7 @@ import org.firstinspires.ftc.teamcode.subsystems.SpindexerSubsystem;
  */
 public class ThreeBallAutoShootCommand extends SequentialCommandGroup {
 
-    public ThreeBallAutoShootCommand(EjectorSubsystem ejector, SpindexerSubsystem spindexer) {
+    public ThreeBallAutoShootCommand(EjectorSubsystem ejector, SpindexerSubsystem spindexer, ShooterSubsystem shooter) {
         int first = spindexer.getCurrentSlotIndex();
         int second, third;
 
@@ -34,6 +36,7 @@ public class ThreeBallAutoShootCommand extends SequentialCommandGroup {
 
         addCommands(
             // Shot 1
+            new WaitUntilCommand(shooter::isReady),
             new EjectCycleCommand(ejector),
             new WaitCommand(250), // Recovery time
 
@@ -42,6 +45,7 @@ public class ThreeBallAutoShootCommand extends SequentialCommandGroup {
             new WaitCommand(delay1),
 
             // Shot 2
+            new WaitUntilCommand(shooter::isReady),
             new EjectCycleCommand(ejector),
             new WaitCommand(250), // Recovery time
 
@@ -50,6 +54,7 @@ public class ThreeBallAutoShootCommand extends SequentialCommandGroup {
             new WaitCommand(delay2),
 
             // Shot 3
+            new WaitUntilCommand(shooter::isReady),
             new EjectCycleCommand(ejector)
         );
     }

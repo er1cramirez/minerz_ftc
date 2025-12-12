@@ -361,20 +361,24 @@ public class IntegratedDriveTest extends CommandOpMode {
 
         // Y: Ejecutar comando de eyección SINGLE
         if (gamepad2.y && !lastY) {
-            schedule(new EjectCycleCommand(ejector));
+            if (shooter.isReady()) {
+                schedule(new EjectCycleCommand(ejector));
+            } else {
+                gamepad2.rumble(200); // Feedback if not ready
+            }
         }
         lastY = gamepad2.y;
 
         // RIGHT BUMPER: Auto Shoot 3 (Optimized)
         if (gamepad2.right_bumper && !lastRightBumper) {
-             schedule(new ThreeBallAutoShootCommand(ejector, spindexer));
+             schedule(new ThreeBallAutoShootCommand(ejector, spindexer, shooter));
         }
         lastRightBumper = gamepad2.right_bumper;
 
         // LEFT BUMPER: Custom Sequence Test [0, 2, 1]
         if (gamepad2.left_bumper && !lastLeftBumper) {
              // Example sequence: Slot 0 -> Slot 2 -> Slot 1
-             schedule(new SequenceAutoShootCommand(ejector, spindexer, 0, 2, 1));
+             schedule(new SequenceAutoShootCommand(ejector, spindexer, shooter, 0, 2, 1));
         }
         lastLeftBumper = gamepad2.left_bumper;
     }

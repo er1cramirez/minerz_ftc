@@ -17,7 +17,7 @@ public class ShooterConstants {
     public static final int WARMUP_DELAY_MS = 200;
 
     // ===== TOLERANCIAS =====
-    public static final double VELOCITY_TOLERANCE = 50.0;  // ±50 RPM
+    public static final double VELOCITY_TOLERANCE = 80.0;  // ±80 RPM
 
     // ===== CONTROL PID + FF =====
     // Valores del tuning

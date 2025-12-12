@@ -3,9 +3,11 @@ package org.firstinspires.ftc.teamcode.commands.sequences;
 import com.seattlesolvers.solverslib.command.InstantCommand;
 import com.seattlesolvers.solverslib.command.SequentialCommandGroup;
 import com.seattlesolvers.solverslib.command.WaitCommand;
+import com.seattlesolvers.solverslib.command.WaitUntilCommand;
 import org.firstinspires.ftc.teamcode.commands.ejector.EjectCycleCommand;
 import org.firstinspires.ftc.teamcode.subsystems.EjectorSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.SpindexerSubsystem;
+import org.firstinspires.ftc.teamcode.subsystems.ShooterSubsystem;
 
 /**
  * Executes a specific sequence of shots based on provided slot indices.
@@ -15,7 +17,7 @@ import org.firstinspires.ftc.teamcode.subsystems.SpindexerSubsystem;
  */
 public class SequenceAutoShootCommand extends SequentialCommandGroup {
 
-    public SequenceAutoShootCommand(EjectorSubsystem ejector, SpindexerSubsystem spindexer, int... slotSequence) {
+    public SequenceAutoShootCommand(EjectorSubsystem ejector, SpindexerSubsystem spindexer, ShooterSubsystem shooter, int... slotSequence) {
         
         int currentPos = spindexer.getCurrentSlotIndex();
 
@@ -32,8 +34,9 @@ public class SequenceAutoShootCommand extends SequentialCommandGroup {
                 new WaitCommand(delay)
             );
 
-            // 2. Shoot
+            // 2. Shoot (Check readiness first)
             addCommands(
+                new WaitUntilCommand(shooter::isReady),
                 new EjectCycleCommand(ejector),
                 new WaitCommand(250)
             );
