@@ -16,7 +16,10 @@ import org.firstinspires.ftc.teamcode.subsystems.SpindexerSubsystem.SlotState;
 import org.firstinspires.ftc.teamcode.subsystems.EjectorSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.ShooterSubsystem;
 
+import com.seattlesolvers.solverslib.command.InstantCommand;
 import org.firstinspires.ftc.teamcode.commands.ejector.EjectCycleCommand;
+import org.firstinspires.ftc.teamcode.commands.sequences.SequenceAutoShootCommand;
+import org.firstinspires.ftc.teamcode.commands.sequences.ThreeBallAutoShootCommand;
 
 /**
  * OpMode de Testing Integrado - Drive + Intake + Spindexer
@@ -249,7 +252,15 @@ public class IntegratedDriveTest extends CommandOpMode {
         float leftTrigger = gamepad2.left_trigger;
         
         if (rightTrigger > 0.1) {
-            intake.intake();
+            // SAFETY: Only intake if at intake position
+            if (spindexer.isAtIntake()) {
+                intake.intake();
+            } else {
+                intake.stop();
+                if (!lastDpadRight) { // Avoid spamming telemetry
+                     // Optional: Add telemetry alert here if needed
+                }
+            }
         } else if (leftTrigger > 0.1) {
             intake.outtake();
         } else {
@@ -300,6 +311,7 @@ public class IntegratedDriveTest extends CommandOpMode {
                 // Modo AUTO: detectar con sensor
                 try {
                     SpindexerSubsystem.BallColor detected = spindexer.autoDetectAndLabel();
+        // ... (rest of logic)
                     lastDetectionResult = "Detected: " + detected.name();
                     
                     // Feedback al driver
@@ -323,19 +335,11 @@ public class IntegratedDriveTest extends CommandOpMode {
         }
         lastX = gamepad2.x;
         
-        // RIGHT BUMPER: Marcar PURPLE
-        if (gamepad2.right_bumper && !lastRightBumper) {
-            spindexer.setSlotState(spindexer.getCurrentSlotIndex(), SlotState.PURPLE);
-            lastDetectionResult = "Manual: PURPLE";
-        }
-        lastRightBumper = gamepad2.right_bumper;
+        // REMOVED RIGHT BUMPER PURPLE (Moved to RB=AutoShoot) - use another button if needed or stick to Auto
+        // Re-assigning Manual Purple to LEFT_STICK_BUTTON for now? Or just rely on Auto.
         
-        // LEFT BUMPER: Limpiar slot
-        if (gamepad2.left_bumper && !lastLeftBumper) {
-            spindexer.clearCurrentSlot();
-            lastDetectionResult = "Cleared";
-        }
-        lastLeftBumper = gamepad2.left_bumper;
+        // REMOVED CONFLICTING DPAD_LEFT LOGIC FOR SPINDEXER
+        // It was conflicting with Shooter Idle
         
         // START: Toggle modo AUTO/MANUAL
         if (gamepad2.start && !lastStart) {
@@ -350,11 +354,29 @@ public class IntegratedDriveTest extends CommandOpMode {
     // ==================== EJECTOR CONTROLS ====================
     
     private void handleEjectorControls() {
-        // Y: Ejecutar comando de eyección
+        // SAFETY: Only eject if at OUTTAKE position
+        if (!spindexer.isAtOuttake()) {
+            return;
+        }
+
+        // Y: Ejecutar comando de eyección SINGLE
         if (gamepad2.y && !lastY) {
             schedule(new EjectCycleCommand(ejector));
         }
         lastY = gamepad2.y;
+
+        // RIGHT BUMPER: Auto Shoot 3 (Optimized)
+        if (gamepad2.right_bumper && !lastRightBumper) {
+             schedule(new ThreeBallAutoShootCommand(ejector, spindexer));
+        }
+        lastRightBumper = gamepad2.right_bumper;
+
+        // LEFT BUMPER: Custom Sequence Test [0, 2, 1]
+        if (gamepad2.left_bumper && !lastLeftBumper) {
+             // Example sequence: Slot 0 -> Slot 2 -> Slot 1
+             schedule(new SequenceAutoShootCommand(ejector, spindexer, 0, 2, 1));
+        }
+        lastLeftBumper = gamepad2.left_bumper;
     }
 
     // ==================== SHOOTER CONTROLS ====================

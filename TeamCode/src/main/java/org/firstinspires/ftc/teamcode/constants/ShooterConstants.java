@@ -9,7 +9,7 @@ public class ShooterConstants {
 
     // ===== VELOCIDADES (RPM) =====
     public static final double IDLE_VELOCITY = 2000.0;
-    public static final double CLOSE_VELOCITY = 2600.0;
+    public static final double CLOSE_VELOCITY = 2700.0;
     public static final double FAR_VELOCITY = 3300.0;
 
     // Warm-up (para transición suave OFF → IDLE)
@@ -21,11 +21,11 @@ public class ShooterConstants {
 
     // ===== CONTROL PID + FF =====
     // Valores del tuning
-    public static final double kP = 2.5;
+    public static final double kP = 2.65;
     public static final double kI = 0.0;
     public static final double kD = 0.0;
     public static final double kF = 0.0;
-    public static final double kV = 1.4;
+    public static final double kV = 1.8;
 
     // ===== CONVERSIÓN =====
     public static final double COUNTS_TO_RPM = 60.0 / CPR;
