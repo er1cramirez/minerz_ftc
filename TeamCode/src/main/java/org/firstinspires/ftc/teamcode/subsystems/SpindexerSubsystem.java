@@ -205,6 +205,13 @@ public class SpindexerSubsystem extends SubsystemBase {
         return indexerServo.getPosition();
     }
 
+    /**
+     * Obtiene el estado del slot actual.
+     */
+    public SlotState getCurrentSlotState() {
+        return getSlotState(currentSlotIndex);
+    }
+
     // ==================== MÉTODOS DE CONSULTA - SLOTS ====================
 
     /**
@@ -332,6 +339,41 @@ public class SpindexerSubsystem extends SubsystemBase {
         slotStates[0] = slot0;
         slotStates[1] = slot1;
         slotStates[2] = slot2;
+    }
+
+    // ==================== MÉTODOS DE DETECCIÓN Y LÓGICA ====================
+
+    /**
+     * Detecta el color de la pelota actual y actualiza el estado del slot automáticamente.
+     * 
+     * @return El color detectado
+     * @throws IllegalStateException si no está en posición de intake
+     */
+    public BallColor autoDetectAndLabel() {
+        if (!isAtIntake()) {
+            throw new IllegalStateException("Spindexer must be at intake position to detect.");
+        }
+        
+        BallColor color = readCurrentColor();
+        SlotState newState;
+        
+        switch (color) {
+            case YELLOW:
+                newState = SlotState.YELLOW;
+                break;
+            case PURPLE:
+                newState = SlotState.PURPLE;
+                break;
+            case NONE:
+                newState = SlotState.EMPTY;
+                break;
+            default:
+                newState = SlotState.UNKNOWN;
+                break;
+        }
+        
+        setSlotState(currentSlotIndex, newState);
+        return color;
     }
 
     // ==================== MÉTODOS DE DETECCIÓN - SENSOR ====================

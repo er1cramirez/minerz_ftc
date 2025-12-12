@@ -8,7 +8,7 @@ public class EjectorConstants {
     // Servo positions
     public static class Positions {
         public static final double STOW_POSITION = 0.5;
-        public static final double EJECT_POSITION = 0.2;
+        public static final double EJECT_POSITION = 0.28;
     }
     
     // Timing constants (in milliseconds)

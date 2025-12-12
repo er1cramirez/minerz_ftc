@@ -14,6 +14,9 @@ import org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.SpindexerSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.SpindexerSubsystem.SlotState;
 import org.firstinspires.ftc.teamcode.subsystems.EjectorSubsystem;
+import org.firstinspires.ftc.teamcode.subsystems.ShooterSubsystem;
+
+import org.firstinspires.ftc.teamcode.commands.ejector.EjectCycleCommand;
 
 /**
  * OpMode de Testing Integrado - Drive + Intake + Spindexer
@@ -55,8 +58,13 @@ import org.firstinspires.ftc.teamcode.subsystems.EjectorSubsystem;
  *       en la telemetría, pero requiere confirmación manual para etiquetar.
  * 
  * EJECTOR:
- * - Back: Ejecutar eyección (EJECT → STOW automático)
+ * - Y: Ejecutar eyección (Ciclo completo: EJECT → STOW)
  * 
+ * SHOOTER:
+ * - DPAD UP: Velocidad FAR
+ * - DPAD DOWN: Velocidad CLOSE
+ * - DPAD LEFT: Velocidad IDLE
+ * - DPAD RIGHT: STOP
  * ═══════════════════════════════════════════════════════════════════
  * WORKFLOW RECOMENDADO:
  * ═══════════════════════════════════════════════════════════════════
@@ -90,6 +98,7 @@ public class IntegratedDriveTest extends CommandOpMode {
     private IntakeSubsystem intake;
     private SpindexerSubsystem spindexer;
     private EjectorSubsystem ejector;
+    private ShooterSubsystem shooter;
     
     // ==================== COMMANDS ====================
     private TeleOpDriveCommand driveCommand;
@@ -135,6 +144,7 @@ public class IntegratedDriveTest extends CommandOpMode {
         drive = new DriveSubsystem(follower);
         intake = new IntakeSubsystem(hardwareMap);
         ejector = new EjectorSubsystem(hardwareMap);
+        shooter = new ShooterSubsystem(hardwareMap);
         
         // Intentar inicializar spindexer con sensor
         try {
@@ -153,6 +163,7 @@ public class IntegratedDriveTest extends CommandOpMode {
         register(intake);
         register(spindexer);
         register(ejector);
+        register(shooter);
         
         // Inicializar gamepads
         driverGamepad = new GamepadEx(gamepad1);
@@ -219,6 +230,7 @@ public class IntegratedDriveTest extends CommandOpMode {
         handleIntakeControls();
         handleSpindexerControls();
         handleEjectorControls();
+        handleShooterControls();
         
         // Actualizar lectura del sensor (si está disponible)
         updateSensorReading();
@@ -263,22 +275,22 @@ public class IntegratedDriveTest extends CommandOpMode {
         lastDpadDown = gamepad2.dpad_down;
 
         
-        // === SELECCIÓN DE SLOT ===
         
+        // === SELECCIÓN DE SLOT (SECUENCIAL) ===
+        
+        // A: Siguiente posición INTAKE (Ciclo 0 -> 1 -> 2)
         if (gamepad2.a && !lastA) {
-            spindexer.moveToIntakePosition(0);
+            int nextSlot = (spindexer.getCurrentSlotIndex() + 1) % 3;
+            spindexer.moveToIntakePosition(nextSlot);
         }
         lastA = gamepad2.a;
         
+        // B: Siguiente posición OUTTAKE (Ciclo 0 -> 1 -> 2)
         if (gamepad2.b && !lastB) {
-            spindexer.moveToIntakePosition(1);
+            int nextSlot = (spindexer.getCurrentSlotIndex() + 1) % 3;
+            spindexer.moveToOuttakePosition(nextSlot);
         }
         lastB = gamepad2.b;
-        
-        if (gamepad2.y && !lastY) {
-            spindexer.moveToIntakePosition(2);
-        }
-        lastY = gamepad2.y;
         
         // === DETECCIÓN Y ETIQUETADO ===
         
@@ -338,12 +350,25 @@ public class IntegratedDriveTest extends CommandOpMode {
     // ==================== EJECTOR CONTROLS ====================
     
     private void handleEjectorControls() {
-        // BACK: Ejecutar comando completo (EJECT → STOW automático)
-        if (gamepad2.back && !lastBack) {
-            // Usar el método integrado que maneja el ciclo automáticamente
-            ejector.ejectAndStow();
+        // Y: Ejecutar comando de eyección
+        if (gamepad2.y && !lastY) {
+            schedule(new EjectCycleCommand(ejector));
         }
-        lastBack = gamepad2.back;
+        lastY = gamepad2.y;
+    }
+
+    // ==================== SHOOTER CONTROLS ====================
+
+    private void handleShooterControls() {
+        if (gamepad2.dpad_up) {
+            shooter.spinUpFar();
+        } else if (gamepad2.dpad_down) {
+            shooter.spinUpClose();
+        } else if (gamepad2.dpad_left) {
+            shooter.idle();
+        } else if (gamepad2.dpad_right) {
+            shooter.stop();
+        }
     }
     
     // ==================== SENSOR READING ====================
@@ -359,7 +384,7 @@ public class IntegratedDriveTest extends CommandOpMode {
         }
         
         // Solo leer si está en posición de intake y el slot actual está vacío o es UNKNOWN
-        if (!spindexer.isInIntakePosition()) {
+        if (!spindexer.isAtIntake()) {
             currentColorReading = "";
             return;
         }
@@ -417,9 +442,8 @@ public class IntegratedDriveTest extends CommandOpMode {
     
     private void checkSafety() {
         // No rotar spindexer mientras intake está activo
-        showRotationWarning = intake.isActive() && 
-                              (spindexer.getState() == SpindexerSubsystem.SpindexerState.MOVING_TO_INTAKE ||
-                               spindexer.getState() == SpindexerSubsystem.SpindexerState.MOVING_TO_OUTTAKE);
+        // (Lógica deshabilitada temporalmente porque el subsistema ya no reporta estados de movimiento)
+        showRotationWarning = false; 
     }
     
     // ==================== TELEMETRY ====================
@@ -502,21 +526,30 @@ public class IntegratedDriveTest extends CommandOpMode {
         telemetry.addLine("┌─ EJECTOR ────────────────────┐");
         telemetry.addData("│ State", getEjectorEmoji() + " " + ejector.getState().name());
         telemetry.addData("│ Is Stowed", ejector.isStowed() ? "✅ Yes" : "❌ No");
-        if (ejector.isCycleInProgress()) {
-            telemetry.addData("│ Cycle Progress", "%.0f / %.0f ms", 
-                            ejector.getCycleElapsedMs(),
-                            org.firstinspires.ftc.teamcode.constants.EjectorConstants.Timing.FULL_CYCLE_TIME_MS);
+        telemetry.addData("│ Control", "Y button to eject");
+        telemetry.addLine("└──────────────────────────────┘");
+        telemetry.addLine();
+
+        // ===== SHOOTER STATUS =====
+        telemetry.addLine("┌─ SHOOTER ────────────────────┐");
+        telemetry.addData("│ State", shooter.getState().name());
+        telemetry.addData("│ RPM", "%.0f / %.0f", shooter.getCurrentRpm(), shooter.getTargetRpm());
+        if (shooter.isReady()) {
+             telemetry.addData("│ Status", "✅ READY TO FIRE");
+        } else if (shooter.isSpinningUp()) {
+             telemetry.addData("│ Status", "⏳ SPINNING UP...");
+        } else {
+             telemetry.addData("│ Status", "⏹️ STOPPED/IDLE");
         }
-        telemetry.addData("│ Control", "Back button to eject");
         telemetry.addLine("└──────────────────────────────┘");
         telemetry.addLine();
         
         // ===== WORKFLOW HINTS =====
         telemetry.addLine("┌─ NEXT STEPS ─────────────────┐");
-        if (spindexer.areAllSlotsFull()) {
+        if (spindexer.isFull()) {
             telemetry.addLine("│ ✅ ALL SLOTS FULL");
             telemetry.addLine("│ → DPAD DOWN + LT to launch");
-        } else if (spindexer.isInIntakePosition()) {
+        } else if (spindexer.isAtIntake()) {
             if (spindexer.getCurrentSlotState() == SlotState.EMPTY) {
                 telemetry.addLine("│ → RT to intake ball");
                 telemetry.addLine("│ → X to detect/label");
@@ -564,8 +597,6 @@ public class IntegratedDriveTest extends CommandOpMode {
         switch (ejector.getState()) {
             case EJECTING:
                 return "🚀";
-            case RETURNING:
-                return "↩️";
             case STOWED:
             default:
                 return "📦";
