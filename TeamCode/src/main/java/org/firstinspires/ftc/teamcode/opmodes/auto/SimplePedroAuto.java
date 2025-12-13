@@ -2,7 +2,6 @@ package org.firstinspires.ftc.teamcode.opmodes.auto;
 
 import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.BezierLine;
-import com.pedropathing.geometry.Point;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.PathChain;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
@@ -92,7 +91,7 @@ public class SimplePedroAuto extends CommandOpMode {
 
     private void buildPaths() {
         basicMovementPath = follower.pathBuilder()
-                .addPath(new BezierLine(new Point(startPose), new Point(endPose)))
+                .addPath(new BezierLine(startPose, endPose))
                 .setLinearHeadingInterpolation(startPose.getHeading(), endPose.getHeading())
                 .build();
     }
