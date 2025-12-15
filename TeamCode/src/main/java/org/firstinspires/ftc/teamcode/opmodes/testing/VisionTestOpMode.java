@@ -26,6 +26,7 @@ import org.firstinspires.ftc.teamcode.util.VisionTarget;
  * - FPS
  * - Alineación
  */
+@Disabled
 @TeleOp(name = "Vision Test", group = "Testing")
 //@Disabled  // Remover cuando esté listo para usar
 public class VisionTestOpMode extends CommandOpMode {

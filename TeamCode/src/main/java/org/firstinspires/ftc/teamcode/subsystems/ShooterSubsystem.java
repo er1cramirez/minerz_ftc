@@ -13,7 +13,8 @@ public class ShooterSubsystem extends SubsystemBase {
         WARMING_UP,
         IDLE,
         SPIN_UP_CLOSE,
-        SPIN_UP_FAR
+        SPIN_UP_FAR,
+        SPIN_UP_CUSTOM
     }
 
     private final MotorEx flywheel;
@@ -59,6 +60,10 @@ public class ShooterSubsystem extends SubsystemBase {
         targetRpm = ShooterConstants.WARMUP_VELOCITY;
     }
 
+    public void spinUpAt(double targetSpin) {
+        currentState = ShooterState.SPIN_UP_CUSTOM;
+        targetRpm = targetSpin;
+    }
     public void idle() {
         currentState = ShooterState.IDLE;
         targetRpm = ShooterConstants.IDLE_VELOCITY;
@@ -98,6 +103,7 @@ public class ShooterSubsystem extends SubsystemBase {
         return currentState == ShooterState.SPIN_UP_CLOSE
                 || currentState == ShooterState.SPIN_UP_FAR;
     }
+
 
     public boolean isReady() {
         if (!isSpinningUp()) {

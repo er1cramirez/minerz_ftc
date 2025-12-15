@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.opmodes.testing;
 
 import com.qualcomm.hardware.lynx.LynxModule;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.seattlesolvers.solverslib.command.CommandOpMode;
@@ -13,7 +14,7 @@ import org.firstinspires.ftc.teamcode.commands.shooter.*;
 import org.firstinspires.ftc.teamcode.subsystems.ShooterSubsystem;
 
 import java.util.List;
-
+@Disabled
 @TeleOp(name = "Shooter Subsystem Test", group = "Testing")
 public class ShooterSubsystemTest extends CommandOpMode {
 

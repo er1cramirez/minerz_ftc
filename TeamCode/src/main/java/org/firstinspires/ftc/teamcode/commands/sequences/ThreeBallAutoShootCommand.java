@@ -36,7 +36,8 @@ public class ThreeBallAutoShootCommand extends SequentialCommandGroup {
 
         addCommands(
             // Shot 1
-            new WaitUntilCommand(shooter::isReady),
+            new WaitCommand(350), // Wait for speed up
+            // new WaitUntilCommand(shooter::isReady),
             new EjectCycleCommand(ejector),
             new WaitCommand(250), // Recovery time
 
@@ -45,7 +46,8 @@ public class ThreeBallAutoShootCommand extends SequentialCommandGroup {
             new WaitCommand(delay1),
 
             // Shot 2
-            new WaitUntilCommand(shooter::isReady),
+            new WaitCommand(350), // Wait for speed up
+            // new WaitUntilCommand(shooter::isReady),
             new EjectCycleCommand(ejector),
             new WaitCommand(250), // Recovery time
 
@@ -54,7 +56,8 @@ public class ThreeBallAutoShootCommand extends SequentialCommandGroup {
             new WaitCommand(delay2),
 
             // Shot 3
-            new WaitUntilCommand(shooter::isReady),
+            new WaitCommand(350), // Wait for speed up
+            // new WaitUntilCommand(shooter::isReady),
             new EjectCycleCommand(ejector)
         );
     }

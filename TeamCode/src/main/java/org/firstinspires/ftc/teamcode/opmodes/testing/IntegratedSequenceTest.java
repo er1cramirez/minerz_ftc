@@ -22,79 +22,15 @@ import org.firstinspires.ftc.teamcode.commands.sequences.SequenceAutoShootComman
 import org.firstinspires.ftc.teamcode.commands.sequences.ThreeBallAutoShootCommand;
 
 /**
- * OpMode de Testing Integrado - Drive + Intake + Spindexer
+ * OpMode for Testing Specific Shot Sequences
  * 
- * Combina el control completo del robot: movimiento, recolección e indexado.
- * El sensor de color está habilitado pero NO es obligatorio para el funcionamiento.
- * 
- * ═══════════════════════════════════════════════════════════════════
- * GAMEPAD 1 - DRIVER (MOVIMIENTO)
- * ═══════════════════════════════════════════════════════════════════
- * - Left Stick: Forward/Strafe
- * - Right Stick X: Rotation
- * - Left Bumper: Slow Mode
- * - Right Bumper: Turbo Mode
- * - Back: Toggle Robot/Field Centric
- * 
- * ═══════════════════════════════════════════════════════════════════
- * GAMEPAD 2 - OPERATOR (MECANISMOS)
- * ═══════════════════════════════════════════════════════════════════
- * 
- * INTAKE:
- * - Right Trigger: Intake (recoger)
- * - Left Trigger: Outtake (expulsar)
- * 
- * SPINDEXER - MOVIMIENTO:
- * - DPAD UP: Posición INTAKE (slot actual)
- * - DPAD DOWN: Posición OUTTAKE (slot actual)
- * - DPAD RIGHT: Siguiente slot
- * - DPAD LEFT: Slot vacío más cercano
- * - A: Slot 0  |  B: Slot 1  |  Y: Slot 2
- * 
- * SPINDEXER - DETECCIÓN Y ETIQUETADO:
- * - X: AUTO=Auto-detectar y etiquetar | MANUAL=Marcar YELLOW
- * - Right Bumper: Marcar slot como PURPLE
- * - Left Bumper: Limpiar slot (EMPTY)
- * - Start: Toggle entre modo AUTO y MANUAL
- * 
- * NOTA: En modo MANUAL, el sensor sigue mostrando el color detectado
- *       en la telemetría, pero requiere confirmación manual para etiquetar.
- * 
- * EJECTOR:
- * - Y: Ejecutar eyección (Ciclo completo: EJECT → STOW)
- * 
- * SHOOTER:
- * - DPAD UP: Velocidad FAR
- * - DPAD DOWN: Velocidad CLOSE
- * - DPAD LEFT: Velocidad IDLE
- * - DPAD RIGHT: STOP
- * ═══════════════════════════════════════════════════════════════════
- * WORKFLOW RECOMENDADO:
- * ═══════════════════════════════════════════════════════════════════
- * 
- * MODO AUTO (con sensor):
- * 1. Mover spindexer a slot vacío (DPAD LEFT)
- * 2. Posicionar en INTAKE (DPAD UP)
- * 3. Activar intake (RT)
- * 4. Cuando entre pelota, presionar X para auto-detectar
- * 5. Repetir con siguiente slot (DPAD RIGHT)
- * 
- * MODO MANUAL (etiquetado manual, lectura de sensor si disponible):
- * 1. Mover spindexer a slot vacío (DPAD LEFT)
- * 2. Posicionar en INTAKE (DPAD UP)
- * 3. Activar intake (RT)
- * 4. Ver color detectado en telemetría (si sensor disponible)
- * 5. Etiquetar manualmente: X=YELLOW, RB=PURPLE
- * 6. Repetir con siguiente slot (DPAD RIGHT)
- * 
- * LANZAR:
- * 1. Mover a slot lleno (A/B/Y o DPAD RIGHT)
- * 2. Posicionar en OUTTAKE (DPAD DOWN)
- * 3. Activar outtake (LT)
- * 4. Limpiar slot después de lanzar (LB)
+ * Maps buttons to specific shooting orders assuming Green is in Slot 0.
+ * A: Green First (0, 1, 2)
+ * B: Green Middle (1, 0, 2)
+ * Y: Green Last (1, 2, 0)
  */
-@TeleOp(name = "🤖 Integrated Drive Test", group = "Testing")
-public class IntegratedDriveTest extends CommandOpMode {
+@TeleOp(name = "Teleop con secuencias", group = "Testing")
+public class IntegratedSequenceTest extends CommandOpMode {
     
     // ==================== SUBSYSTEMS ====================
     private DriveSubsystem drive;
@@ -189,13 +125,13 @@ public class IntegratedDriveTest extends CommandOpMode {
         // Mensaje de inicio
         telemetry.addLine();
         telemetry.addLine("════════════════════════════");
-        telemetry.addLine("  🤖 INTEGRATED DRIVE TEST");
+        telemetry.addLine("  🤖 INTEGRATED SEQUENCE TEST");
         telemetry.addLine("════════════════════════════");
         telemetry.addLine();
-        telemetry.addLine("GAMEPAD 1: Drive Controls");
-        telemetry.addLine("GAMEPAD 2: Mechanisms");
-        telemetry.addLine();
-        telemetry.addData("Mode", sensorAvailable ? "AUTO (sensor)" : "MANUAL");
+        telemetry.addLine("GAMEPAD 2: Sequences");
+        telemetry.addLine("A: Green First (0-1-2)");
+        telemetry.addLine("B: Green Middle (1-0-2)");
+        telemetry.addLine("Y: Green Last (1-2-0)");
         telemetry.addLine();
         telemetry.addLine("Press START when ready!");
         telemetry.update();
@@ -232,7 +168,7 @@ public class IntegratedDriveTest extends CommandOpMode {
         // Controles del operator (mecanismos)
         handleIntakeControls();
         handleSpindexerControls();
-        handleEjectorControls();
+        handleSequenceControls(); // Replaces handleEjectorControls
         handleShooterControls();
         
         // Actualizar lectura del sensor (si está disponible)
@@ -284,24 +220,24 @@ public class IntegratedDriveTest extends CommandOpMode {
             spindexer.moveToOuttakePosition(spindexer.getCurrentSlotIndex());
         }
         lastDpadDown = gamepad2.dpad_down;
+        
+        // === REMOVED MANUAL SLOT SELECTION (A/B) to free up buttons for Sequences ===
+        // Use DPAD Right/Left for manual slot control if needed, or rely on Auto
+        
+        // DPAD RIGHT: Siguiente slot
+        if (gamepad2.dpad_right && !lastDpadRight) {
+             int nextSlot = (spindexer.getCurrentSlotIndex() + 1) % 3;
+             spindexer.moveToIntakePosition(nextSlot);
+        }
+        lastDpadRight = gamepad2.dpad_right;
 
-        
-        
-        // === SELECCIÓN DE SLOT (SECUENCIAL) ===
-        
-        // A: Siguiente posición INTAKE (Ciclo 0 -> 1 -> 2)
-        if (gamepad2.a && !lastA) {
-            int nextSlot = (spindexer.getCurrentSlotIndex() + 1) % 3;
-            spindexer.moveToIntakePosition(nextSlot);
+        // DPAD LEFT: Anterior slot / Empty search
+        if (gamepad2.dpad_left && !lastDpadLeft) {
+             // Simple cycle backwards for manual adjusting
+             int prevSlot = (spindexer.getCurrentSlotIndex() + 2) % 3;
+             spindexer.moveToIntakePosition(prevSlot);
         }
-        lastA = gamepad2.a;
-        
-        // B: Siguiente posición OUTTAKE (Ciclo 0 -> 1 -> 2)
-        if (gamepad2.b && !lastB) {
-            int nextSlot = (spindexer.getCurrentSlotIndex() + 1) % 3;
-            spindexer.moveToOuttakePosition(nextSlot);
-        }
-        lastB = gamepad2.b;
+        lastDpadLeft = gamepad2.dpad_left;
         
         // === DETECCIÓN Y ETIQUETADO ===
         
@@ -335,12 +271,6 @@ public class IntegratedDriveTest extends CommandOpMode {
         }
         lastX = gamepad2.x;
         
-        // REMOVED RIGHT BUMPER PURPLE (Moved to RB=AutoShoot) - use another button if needed or stick to Auto
-        // Re-assigning Manual Purple to LEFT_STICK_BUTTON for now? Or just rely on Auto.
-        
-        // REMOVED CONFLICTING DPAD_LEFT LOGIC FOR SPINDEXER
-        // It was conflicting with Shooter Idle
-        
         // START: Toggle modo AUTO/MANUAL
         if (gamepad2.start && !lastStart) {
             if (sensorAvailable) {
@@ -351,61 +281,56 @@ public class IntegratedDriveTest extends CommandOpMode {
         lastStart = gamepad2.start;
     }
     
-    // ==================== EJECTOR CONTROLS ====================
+    // ==================== SEQUENCE CONTROLS ====================
     
-    private void handleEjectorControls() {
-        // SAFETY: Only eject if at OUTTAKE position
-        if (!spindexer.isAtOuttake()) {
-            return;
-        }
+    private void handleSequenceControls() {
+        // SAFETY: Only shoot if at OUTTAKE position or just allow the sequence to handle moves
+        // SequenceAutoShootCommand handles movement, so we just need to trigger it.
 
-        // Y: Ejecutar comando de eyección SINGLE
+        // A: Green First (0, 1, 2)
+        if (gamepad2.a && !lastA) {
+            schedule(new SequenceAutoShootCommand(ejector, spindexer, shooter, 0, 1, 2));
+            gamepad2.rumble(200);
+        }
+        lastA = gamepad2.a;
+
+        // B: Green Middle (1, 0, 2)
+        if (gamepad2.b && !lastB) {
+            schedule(new SequenceAutoShootCommand(ejector, spindexer, shooter, 1, 0, 2));
+            gamepad2.rumble(200);
+        }
+        lastB = gamepad2.b;
+
+        // Y: Green Last (1, 2, 0)
+        // Note: Slot 0 is Green. P-P-G means 1->2->0.
         if (gamepad2.y && !lastY) {
-            // SAFETY BYPASSED: Allow shooting even if not at full speed
-            schedule(new EjectCycleCommand(ejector));
-            
-            // if (shooter.isReady()) {
-            //    schedule(new EjectCycleCommand(ejector));
-            // } else {
-            //    gamepad2.rumble(200); // Feedback if not ready
-            // }
+            schedule(new SequenceAutoShootCommand(ejector, spindexer, shooter, 1, 2, 0));
+            gamepad2.rumble(200);
         }
         lastY = gamepad2.y;
-
-        // RIGHT BUMPER: Auto Shoot 3 (Optimized)
-        if (gamepad2.right_bumper && !lastRightBumper) {
-             schedule(new ThreeBallAutoShootCommand(ejector, spindexer, shooter));
-        }
-        lastRightBumper = gamepad2.right_bumper;
-
-        // LEFT BUMPER: Custom Sequence Test [0, 2, 1]
-        if (gamepad2.left_bumper && !lastLeftBumper) {
-             // Example sequence: Slot 0 -> Slot 2 -> Slot 1
-             schedule(new SequenceAutoShootCommand(ejector, spindexer, shooter, 0, 2, 1));
-        }
-        lastLeftBumper = gamepad2.left_bumper;
     }
 
     // ==================== SHOOTER CONTROLS ====================
 
     private void handleShooterControls() {
+        // DPAD LEFT was conflicting with Spindexer Move in duplicate.
+        // Let's use Shoulders or other buttons? Or just keep Dpad directions non-overlapping in logic.
+        // In handleSpindexerControls I used DPAD LEFT for prev slot.
+        // In handleShooterControls it was IDLE.
+        // Conflict! Let's remove IDLE from Dpad Left and rely on Stop (Right).
+        
         if (gamepad2.dpad_up) {
-            shooter.spinUpFar();
-        } else if (gamepad2.dpad_down) {
-            shooter.spinUpClose();
-        } else if (gamepad2.dpad_left) {
-            shooter.idle();
-        } else if (gamepad2.dpad_right) {
+            shooter.spinUpFar(); // High Goal
+        } else if (gamepad2.dpad_down) { // Low/Mid or Close
+            shooter.spinUpClose(); 
+        } else if (gamepad2.dpad_right) { // Stop
             shooter.stop();
         }
+        // Removed Dpad Left Idle to allow Spindexer control
     }
     
     // ==================== SENSOR READING ====================
     
-    /**
-     * Actualiza la lectura del sensor en tiempo real (sin etiquetar).
-     * Esto permite al operador ver qué color detecta el sensor antes de confirmar.
-     */
     private void updateSensorReading() {
         if (!sensorAvailable) {
             currentColorReading = "";
@@ -470,8 +395,6 @@ public class IntegratedDriveTest extends CommandOpMode {
     // ==================== SAFETY CHECKS ====================
     
     private void checkSafety() {
-        // No rotar spindexer mientras intake está activo
-        // (Lógica deshabilitada temporalmente porque el subsistema ya no reporta estados de movimiento)
         showRotationWarning = false; 
     }
     
@@ -482,7 +405,7 @@ public class IntegratedDriveTest extends CommandOpMode {
         
         // ===== HEADER =====
         telemetry.addLine("════════════════════════════════════");
-        telemetry.addLine("       🤖 INTEGRATED ROBOT TEST");
+        telemetry.addLine("       🤖 INTEGRATED SEQUENCE TEST");
         telemetry.addLine("════════════════════════════════════");
         telemetry.addLine();
         
@@ -555,7 +478,6 @@ public class IntegratedDriveTest extends CommandOpMode {
         telemetry.addLine("┌─ EJECTOR ────────────────────┐");
         telemetry.addData("│ State", getEjectorEmoji() + " " + ejector.getState().name());
         telemetry.addData("│ Is Stowed", ejector.isStowed() ? "✅ Yes" : "❌ No");
-        telemetry.addData("│ Control", "Y button to eject");
         telemetry.addLine("└──────────────────────────────┘");
         telemetry.addLine();
 
@@ -574,23 +496,10 @@ public class IntegratedDriveTest extends CommandOpMode {
         telemetry.addLine();
         
         // ===== WORKFLOW HINTS =====
-        telemetry.addLine("┌─ NEXT STEPS ─────────────────┐");
-        if (spindexer.isFull()) {
-            telemetry.addLine("│ ✅ ALL SLOTS FULL");
-            telemetry.addLine("│ → DPAD DOWN + LT to launch");
-        } else if (spindexer.isAtIntake()) {
-            if (spindexer.getCurrentSlotState() == SlotState.EMPTY) {
-                telemetry.addLine("│ → RT to intake ball");
-                telemetry.addLine("│ → X to detect/label");
-                telemetry.addLine("│ → DPAD RIGHT for next");
-            } else {
-                telemetry.addLine("│ → Slot already filled");
-                telemetry.addLine("│ → DPAD RIGHT for next");
-            }
-        } else {
-            telemetry.addLine("│ → DPAD UP for intake pos");
-            telemetry.addLine("│ → DPAD LEFT for empty slot");
-        }
+        telemetry.addLine("┌─ SEQUENCES ──────────────────┐");
+        telemetry.addLine("│ A: Green First (0-1-2)");
+        telemetry.addLine("│ B: Green Middle (1-0-2)");
+        telemetry.addLine("│ Y: Green Last (1-2-0)");
         telemetry.addLine("└──────────────────────────────┘");
         
         telemetry.update();

@@ -34,9 +34,10 @@ public class SequenceAutoShootCommand extends SequentialCommandGroup {
                 new WaitCommand(delay)
             );
 
-            // 2. Shoot (Check readiness first)
+            // 2. Shoot (Check readiness first - REMOVED for tuning)
             addCommands(
-                new WaitUntilCommand(shooter::isReady),
+                // new WaitUntilCommand(shooter::isReady), // Start immediately
+                new WaitCommand(350),
                 new EjectCycleCommand(ejector),
                 new WaitCommand(250)
             );

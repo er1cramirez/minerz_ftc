@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.opmodes.testing;
 
 import com.qualcomm.hardware.lynx.LynxModule;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.seattlesolvers.solverslib.hardware.motors.MotorEx;
@@ -15,6 +16,7 @@ import java.util.List;
  * Prueba MÍNIMA para diagnosticar el problema.
  * Replica exactamente la estructura de FlywheelTuning pero simplificado.
  */
+@Disabled
 @TeleOp(name = "Test Flywheel Direct", group = "Testing")
 public class TestFlywheelDirect extends LinearOpMode {
     

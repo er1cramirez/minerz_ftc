@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.opmodes.teleop;
 
 import com.pedropathing.follower.Follower;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.seattlesolvers.solverslib.command.CommandOpMode;
 import com.seattlesolvers.solverslib.command.InstantCommand;
@@ -28,6 +29,7 @@ import org.firstinspires.ftc.teamcode.subsystems.DriveSubsystem;
  * - Right Bumper (RB): Toggle Turbo Mode
  * - Back Button: Toggle Robot/Field Centric
  */
+@Disabled
 @TeleOp(name = "Main TeleOp", group = "Competition")
 public class MainTeleOp extends CommandOpMode {
     

@@ -10,15 +10,14 @@ import com.seattlesolvers.solverslib.command.RunCommand;
 import com.seattlesolvers.solverslib.command.InstantCommand;
 import com.seattlesolvers.solverslib.command.SequentialCommandGroup;
 import com.seattlesolvers.solverslib.command.WaitCommand;
-import com.seattlesolvers.solverslib.pedroCommand.FollowPathCommand;
-import org.firstinspires.ftc.teamcode.commands.sequences.ThreeBallAutoShootCommand;
+import org.firstinspires.ftc.teamcode.commands.sequences.SequenceAutoShootCommand;
 import org.firstinspires.ftc.teamcode.constants.DriveConstants;
 import org.firstinspires.ftc.teamcode.subsystems.EjectorSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.ShooterSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.SpindexerSubsystem;
 
-@Autonomous(name = "Simple Pedro Auto", group = "A")
-public class SimplePedroAuto extends CommandOpMode {
+@Autonomous(name = "Auto Green Last (1-2-0)", group = "A")
+public class AutoGreenLast extends CommandOpMode {
     
     // Subsystems
     private Follower follower;
@@ -26,19 +25,10 @@ public class SimplePedroAuto extends CommandOpMode {
     private SpindexerSubsystem spindexer;
     private ShooterSubsystem shooter;
 
-    // Poses
     private final Pose startPose = new Pose(0, 0, 0);
-    private final Pose endPose = new Pose(10, 0, 0); // Move 10 inches forward
-
-    // Paths
-    private PathChain basicMovementPath;
-
-    // Flag for quick disabling
-    private final boolean ENABLE_SHOOTING = true;
 
     @Override
     public void initialize() {
-        // ... (existing init code) ...
         follower = DriveConstants.createFollower(hardwareMap);
         follower.setStartingPose(startPose);
         ejector = new EjectorSubsystem(hardwareMap);
@@ -49,13 +39,11 @@ public class SimplePedroAuto extends CommandOpMode {
             spindexer = new SpindexerSubsystem(hardwareMap, false);
             telemetry.addLine("Warning: Spindexer sensor not found, using manual mode wrapper");
         }
-        buildPaths();
         register(ejector, shooter);
 
-        // Create the Sequence
         SequentialCommandGroup autoSequence = new SequentialCommandGroup();
 
-        // 1. Basic Movement (Time-based fallback) - Drive FIRST
+        // 1. Basic Movement
         autoSequence.addCommands(
             new WaitCommand(500),
             new InstantCommand(() -> follower.startTeleopDrive()),
@@ -63,38 +51,23 @@ public class SimplePedroAuto extends CommandOpMode {
             new InstantCommand(() -> follower.setTeleOpDrive(0, 0, 0, false))
         );
 
-        // 2. Shoot 3 balls (Conditional) - Shoot SECOND
-        if (ENABLE_SHOOTING) {
-            autoSequence.addCommands(
-                new RunCommand(() -> shooter.spinUpClose(), shooter).withTimeout(1000), // Change to spinUpClose
-                new RunCommand(() -> spindexer.moveToOuttakePosition(0), spindexer).withTimeout(100),
-                new ThreeBallAutoShootCommand(ejector, spindexer, shooter),
-                new RunCommand(() -> shooter.stop(), shooter).withTimeout(50)
-            );
-        }
+        // 2. Shoot Green Last (1, 2, 0)
+        autoSequence.addCommands(
+            new RunCommand(() -> shooter.spinUpClose(), shooter).withTimeout(1000), 
+            new SequenceAutoShootCommand(ejector, spindexer, shooter, 1, 2, 0),
+            new RunCommand(() -> shooter.stop(), shooter).withTimeout(50)
+        );
 
         schedule(autoSequence);
         
-        telemetry.addLine("Initialized Simple Pedro Auto");
-        telemetry.addData("Shooting Enabled", ENABLE_SHOOTING);
+        telemetry.addLine("Initialized Auto Green Last (1-2-0)");
         telemetry.update();
-    }
-
-    private void buildPaths() {
-        basicMovementPath = follower.pathBuilder()
-                .addPath(new BezierLine(startPose, endPose))
-                .setLinearHeadingInterpolation(startPose.getHeading(), endPose.getHeading())
-                .build();
     }
     
     @Override
     public void run() {
-        super.run(); // Updates commands
-        follower.update(); // Updates Pedro Pathing
-        
-        telemetry.addData("X", follower.getPose().getX());
-        telemetry.addData("Y", follower.getPose().getY());
-        telemetry.addData("Heading", follower.getPose().getHeading());
+        super.run(); 
+        follower.update(); 
         telemetry.update();
     }
 }

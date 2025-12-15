@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.opmodes.testing;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.seattlesolvers.solverslib.hardware.motors.MotorEx;
 import com.seattlesolvers.solverslib.gamepad.GamepadEx;
 import com.seattlesolvers.solverslib.gamepad.GamepadKeys;
@@ -24,6 +25,7 @@ import java.util.List;
  * RIGHT_STICK_BUTTON: kV +0.00001
  * X: Reset parámetros
  */
+@Disabled
 @TeleOp(name = "Flywheel Tuning", group = "Tuning")
 public class FlywheelTuning extends LinearOpMode {
 

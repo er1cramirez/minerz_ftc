@@ -11,14 +11,14 @@ import com.seattlesolvers.solverslib.command.InstantCommand;
 import com.seattlesolvers.solverslib.command.SequentialCommandGroup;
 import com.seattlesolvers.solverslib.command.WaitCommand;
 import com.seattlesolvers.solverslib.pedroCommand.FollowPathCommand;
-import org.firstinspires.ftc.teamcode.commands.sequences.ThreeBallAutoShootCommand;
+import org.firstinspires.ftc.teamcode.commands.sequences.SequenceAutoShootCommand;
 import org.firstinspires.ftc.teamcode.constants.DriveConstants;
 import org.firstinspires.ftc.teamcode.subsystems.EjectorSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.ShooterSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.SpindexerSubsystem;
 
-@Autonomous(name = "Simple Pedro Auto", group = "A")
-public class SimplePedroAuto extends CommandOpMode {
+@Autonomous(name = "Auto Green First (0-1-2)", group = "A")
+public class AutoGreenFirst extends CommandOpMode {
     
     // Subsystems
     private Follower follower;
@@ -28,17 +28,13 @@ public class SimplePedroAuto extends CommandOpMode {
 
     // Poses
     private final Pose startPose = new Pose(0, 0, 0);
-    private final Pose endPose = new Pose(10, 0, 0); // Move 10 inches forward
+    private final Pose endPose = new Pose(10, 0, 0); 
 
     // Paths
     private PathChain basicMovementPath;
 
-    // Flag for quick disabling
-    private final boolean ENABLE_SHOOTING = true;
-
     @Override
     public void initialize() {
-        // ... (existing init code) ...
         follower = DriveConstants.createFollower(hardwareMap);
         follower.setStartingPose(startPose);
         ejector = new EjectorSubsystem(hardwareMap);
@@ -55,7 +51,7 @@ public class SimplePedroAuto extends CommandOpMode {
         // Create the Sequence
         SequentialCommandGroup autoSequence = new SequentialCommandGroup();
 
-        // 1. Basic Movement (Time-based fallback) - Drive FIRST
+        // 1. Basic Movement (Time-based fallback)
         autoSequence.addCommands(
             new WaitCommand(500),
             new InstantCommand(() -> follower.startTeleopDrive()),
@@ -63,20 +59,16 @@ public class SimplePedroAuto extends CommandOpMode {
             new InstantCommand(() -> follower.setTeleOpDrive(0, 0, 0, false))
         );
 
-        // 2. Shoot 3 balls (Conditional) - Shoot SECOND
-        if (ENABLE_SHOOTING) {
-            autoSequence.addCommands(
-                new RunCommand(() -> shooter.spinUpClose(), shooter).withTimeout(1000), // Change to spinUpClose
-                new RunCommand(() -> spindexer.moveToOuttakePosition(0), spindexer).withTimeout(100),
-                new ThreeBallAutoShootCommand(ejector, spindexer, shooter),
-                new RunCommand(() -> shooter.stop(), shooter).withTimeout(50)
-            );
-        }
+        // 2. Shoot Green First (0, 1, 2)
+        autoSequence.addCommands(
+            new RunCommand(() -> shooter.spinUpClose(), shooter).withTimeout(1000), 
+            new SequenceAutoShootCommand(ejector, spindexer, shooter, 0, 1, 2),
+            new RunCommand(() -> shooter.stop(), shooter).withTimeout(50)
+        );
 
         schedule(autoSequence);
         
-        telemetry.addLine("Initialized Simple Pedro Auto");
-        telemetry.addData("Shooting Enabled", ENABLE_SHOOTING);
+        telemetry.addLine("Initialized Auto Green First (0-1-2)");
         telemetry.update();
     }
 
@@ -89,8 +81,8 @@ public class SimplePedroAuto extends CommandOpMode {
     
     @Override
     public void run() {
-        super.run(); // Updates commands
-        follower.update(); // Updates Pedro Pathing
+        super.run(); 
+        follower.update(); 
         
         telemetry.addData("X", follower.getPose().getX());
         telemetry.addData("Y", follower.getPose().getY());

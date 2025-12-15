@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.opmodes.testing;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.seattlesolvers.solverslib.command.CommandOpMode;
 import com.seattlesolvers.solverslib.command.InstantCommand;
@@ -31,7 +32,9 @@ import org.firstinspires.ftc.teamcode.constants.EjectorConstants;
  * - Posiciones guardadas (STOW y EJECT)
  * - Instrucciones de calibración
  */
+@Disabled
 @TeleOp(name = "Ejector Test", group = "Testing")
+
 public class EjectorTest extends CommandOpMode {
     
     private EjectorSubsystem ejector;
