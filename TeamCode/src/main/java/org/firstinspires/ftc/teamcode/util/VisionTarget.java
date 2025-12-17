@@ -10,6 +10,7 @@ public class VisionTarget {
     public final int id;
     public final double range;         // Distancia en inches
     public final double bearing;       // Ángulo horizontal en grados (relativo a cámara)
+    public final double yaw;           // Rotación del tag en grados (orientación)
     public final double elevation;     // Ángulo vertical en grados
     private final boolean isValid;     // Cambié a private para forzar uso del getter
     public final long timestamp;       // Cuándo se detectó (System.currentTimeMillis())
@@ -17,11 +18,12 @@ public class VisionTarget {
     /**
      * Constructor principal.
      */
-    public VisionTarget(int id, double range, double bearing, double elevation,
+    public VisionTarget(int id, double range, double bearing, double elevation, double yaw,
                         boolean isValid, long timestamp) {
         this.id = id;
         this.range = range;
         this.bearing = bearing;
+        this.yaw = yaw;
         this.elevation = elevation;
         this.isValid = isValid;
         this.timestamp = timestamp;
@@ -63,15 +65,15 @@ public class VisionTarget {
      * Usado cuando no hay detección disponible.
      */
     public static VisionTarget invalid() {
-        return new VisionTarget(-1, 0, 0, 0, false, 0);
+        return new VisionTarget(-1, 0, 0, 0, 0, false, 0);
     }
 
     /**
      * Crea un target válido con los datos proporcionados.
      * Helper para hacer el código más legible.
      */
-    public static VisionTarget create(int id, double range, double bearing, double elevation) {
-        return new VisionTarget(id, range, bearing, elevation, true, System.currentTimeMillis());
+    public static VisionTarget create(int id, double range, double bearing, double elevation, double yaw) {
+        return new VisionTarget(id, range, bearing, elevation, yaw, true, System.currentTimeMillis());
     }
 
     // ===== UTILIDADES =====

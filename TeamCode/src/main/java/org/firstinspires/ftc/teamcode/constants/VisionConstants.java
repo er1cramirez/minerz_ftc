@@ -25,6 +25,19 @@ public class VisionConstants {
      * - 3: Rápido pero menos preciso
      */
     public static final float DECIMATION = 2.0f;
+
+    // ===== OPTIMIZED EXPOSURE =====
+    /**
+     * Exposure time in milliseconds for high-speed tracking (reduces motion blur).
+     * Typical for global shutter OV9281: 1-5ms.
+     */
+    public static final long OPTIMIZED_EXPOSURE_MS = 2;
+    
+    /**
+     * Gain value for low exposure (compensates for darkness).
+     * Check camera max gain (usually 255 or higher).
+     */
+    public static final int OPTIMIZED_GAIN = 250;
     
     // ===== APRILTAG IDS =====
     /**
