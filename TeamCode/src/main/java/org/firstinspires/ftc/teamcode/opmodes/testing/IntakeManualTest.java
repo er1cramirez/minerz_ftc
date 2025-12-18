@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.opmodes.testing;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.seattlesolvers.solverslib.command.CommandOpMode;
 
@@ -17,6 +18,7 @@ import org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem;
  * - Estado actual del intake
  * - Corriente del motor (Amps)
  */
+@Disabled
 @TeleOp(name = "Intake Manual Test", group = "Testing")
 public class IntakeManualTest extends CommandOpMode {
     

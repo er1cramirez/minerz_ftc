@@ -93,13 +93,13 @@ public class VisionConstants {
      * Empezar en FALSE. Si la detección de distancia no es precisa, cambiar a TRUE
      * y calibrar con AprilTag Calibration Tool.
      */
-    public static final boolean USE_CUSTOM_CALIBRATION = false;
+    public static final boolean USE_CUSTOM_CALIBRATION = true;
     
     // Valores típicos para OV9281 (solo si USE_CUSTOM_CALIBRATION = true)
-    public static final double FX = 578.272;
-    public static final double FY = 578.272;
-    public static final double CX = 320.0;
-    public static final double CY = 240.0;
+    public static final double FX = 545.55;
+    public static final double FY = 544.19;
+    public static final double CX = 325.87;
+    public static final double CY = 259.50;
     
     // ===== TOLERANCIAS =====
     /**

@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.opmodes.testing;
 
 import com.pedropathing.follower.Follower;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.seattlesolvers.solverslib.command.CommandOpMode;
 import com.seattlesolvers.solverslib.command.InstantCommand;
@@ -29,6 +30,7 @@ import org.firstinspires.ftc.teamcode.commands.sequences.ThreeBallAutoShootComma
  * B: Green Middle (1, 0, 2)
  * Y: Green Last (1, 2, 0)
  */
+@Disabled
 @TeleOp(name = "Teleop con secuencias", group = "Testing")
 public class IntegratedSequenceTest extends CommandOpMode {
     
