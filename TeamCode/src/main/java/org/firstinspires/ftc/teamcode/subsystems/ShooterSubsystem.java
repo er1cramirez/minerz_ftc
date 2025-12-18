@@ -32,7 +32,6 @@ public class ShooterSubsystem extends SubsystemBase {
                 (int) ShooterConstants.CPR,
                 ShooterConstants.MAX_RPM
         );
-
         flywheel.setRunMode(MotorEx.RunMode.VelocityControl);
         flywheel.setVeloCoefficients(
                 ShooterConstants.kP,

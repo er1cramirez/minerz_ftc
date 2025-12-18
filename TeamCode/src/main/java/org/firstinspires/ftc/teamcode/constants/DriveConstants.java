@@ -12,6 +12,8 @@ import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+
 /**
  * Constantes para el DriveSubsystem.
  * Incluye configuración de Pedro Pathing y constantes adicionales para TeleOp.
@@ -45,62 +47,13 @@ public class DriveConstants {
      * Modo por defecto al iniciar TeleOp
      */
     public static final boolean DEFAULT_ROBOT_CENTRIC = true;
-    
-    // ========== PEDRO PATHING CONFIGURATION ==========
-    
-    /**
-     * Constantes del Follower (control del robot)
-     */
-    public static final FollowerConstants   FOLLOWER_CONSTANTS = new FollowerConstants()
-            .mass(16.2)
-            .forwardZeroPowerAcceleration(-25.9346931313679598)
-            .lateralZeroPowerAcceleration(-67.342491844080064)
-            .translationalPIDFCoefficients(new PIDFCoefficients(
-                    0.03,
-                    0,
-                    0,
-                    0.015
-            ))
-            .translationalPIDFSwitch(4)
-            .secondaryTranslationalPIDFCoefficients(new PIDFCoefficients(
-                    0.4,
-                    0,
-                    0.005,
-                    0.0006
-            ))
-            .headingPIDFCoefficients(new PIDFCoefficients(
-                    0.8,
-                    0,
-                    0,
-                    0.01
-            ))
-            .secondaryHeadingPIDFCoefficients(new PIDFCoefficients(
-                    2.5,
-                    0,
-                    0.1,
-                    0.0005
-            ))
-            .drivePIDFCoefficients(new FilteredPIDFCoefficients(
-                    0.1,
-                    0,
-                    0.00035,
-                    0.6,
-                    0.015
-            ))
-            .secondaryDrivePIDFCoefficients(new FilteredPIDFCoefficients(
-                    0.02,
-                    0,
-                    0.000005,
-                    0.6,
-                    0.01
-            ))
-            .drivePIDFSwitch(15)
-            .centripetalScaling(0.0005);
-    
+
     /**
      * Constantes del drivetrain Mecanum
      */
     public static final MecanumConstants MECANUM_CONSTANTS = new MecanumConstants()
+            .nominalVoltage(12)
+            .useVoltageCompensation(true)
             .leftFrontMotorName(LEFT_FRONT)
             .leftRearMotorName(LEFT_REAR)
             .rightFrontMotorName(RIGHT_FRONT)
@@ -109,17 +62,77 @@ public class DriveConstants {
             .leftRearMotorDirection(DcMotorSimple.Direction.REVERSE)
             .rightFrontMotorDirection(DcMotorSimple.Direction.FORWARD)
             .rightRearMotorDirection(DcMotorSimple.Direction.FORWARD)
-            .xVelocity(78.261926752421046666666666666667)
-            .yVelocity(61.494551922189565);
-    
+            .xVelocity(64.91748142993357)
+            .yVelocity(53.35088438499631);
+
+
     /**
      * Constantes del localizador Pinpoint
      */
     public static final PinpointConstants LOCALIZER_CONSTANTS = new PinpointConstants()
-            .forwardPodY(0.75)
-            .strafePodX(-6.6)
+            .forwardPodY(-84.5/DistanceUnit.mmPerInch)
+            .strafePodX(-192/DistanceUnit.mmPerInch)
+            .distanceUnit(DistanceUnit.INCH)
+            .hardwareMapName("pinpoint")
+            .encoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD)
             .forwardEncoderDirection(GoBildaPinpointDriver.EncoderDirection.FORWARD)
-            .strafeEncoderDirection(GoBildaPinpointDriver.EncoderDirection.REVERSED);
+            .strafeEncoderDirection(GoBildaPinpointDriver.EncoderDirection.FORWARD);
+    /**
+     * Constantes del Follower (control del robot)
+     */
+    public static final FollowerConstants   FOLLOWER_CONSTANTS = new FollowerConstants()
+            .mass(11.1)
+            .forwardZeroPowerAcceleration(-28.85565750340576)
+            .lateralZeroPowerAcceleration(-51.26203608780011)
+            .useSecondaryTranslationalPIDF(true)
+            .useSecondaryDrivePIDF(true)
+            .useSecondaryHeadingPIDF(true);
+
+//            .translationalPIDFCoefficients(new PIDFCoefficients(
+//                    0.03,
+//                    0,
+//                    0,
+//                    0.015
+//            ))
+//            .translationalPIDFSwitch(4)
+//            .secondaryTranslationalPIDFCoefficients(new PIDFCoefficients(
+//                    0.4,
+//                    0,
+//                    0.005,
+//                    0.0006
+//            ))
+//            .headingPIDFCoefficients(new PIDFCoefficients(
+//                    0.8,
+//                    0,
+//                    0,
+//                    0.01
+//            ))
+//            .secondaryHeadingPIDFCoefficients(new PIDFCoefficients(
+//                    2.5,
+//                    0,
+//                    0.1,
+//                    0.0005
+//            ))
+//            .drivePIDFCoefficients(new FilteredPIDFCoefficients(
+//                    0.1,
+//                    0,
+//                    0.00035,
+//                    0.6,
+//                    0.015
+//            ))
+//            .secondaryDrivePIDFCoefficients(new FilteredPIDFCoefficients(
+//                    0.02,
+//                    0,
+//                    0.000005,
+//                    0.6,
+//                    0.01
+//            ))
+//            .drivePIDFSwitch(15)
+//            .centripetalScaling(0.0005);
+    
+
+    
+
     
     /**
      * PathConstraints para autonomous paths.
@@ -128,6 +141,7 @@ public class DriveConstants {
      * tValueConstraint, velocityConstraint, translationalConstraint, headingConstraint,
      * timeoutConstraint, brakingStrength, BEZIER_CURVE_SEARCH_LIMIT, brakingStart
      */
+    public static PathConstraints pathConstraints = new PathConstraints(0.99, 100, 1, 1);
     public static final PathConstraints PATH_CONSTRAINTS = new PathConstraints(
             0.995,  // tValueConstraint
             0.1,    // velocityConstraint
@@ -152,7 +166,7 @@ public class DriveConstants {
         return new FollowerBuilder(FOLLOWER_CONSTANTS, hardwareMap)
                 .mecanumDrivetrain(MECANUM_CONSTANTS)
                 .pinpointLocalizer(LOCALIZER_CONSTANTS)
-                .pathConstraints(PATH_CONSTRAINTS)
+                .pathConstraints(pathConstraints)
                 .build();
     }
 }

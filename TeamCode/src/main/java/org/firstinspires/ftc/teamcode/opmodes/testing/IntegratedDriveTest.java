@@ -175,9 +175,9 @@ public class IntegratedDriveTest extends CommandOpMode {
         // Crear comando de drive
         driveCommand = new TeleOpDriveCommand(
                 drive,
-                () -> -driverGamepad.getLeftY(),
-                () -> -driverGamepad.getLeftX(),
-                () -> -driverGamepad.getRightX()
+                () -> driverGamepad.getLeftY(),
+                () -> driverGamepad.getLeftX(),
+                () -> driverGamepad.getRightX()
         );
         
         // Establecer como default command
@@ -200,7 +200,8 @@ public class IntegratedDriveTest extends CommandOpMode {
         telemetry.addLine("Press START when ready!");
         telemetry.update();
     }
-    
+
+
     // ==================== BUTTON BINDINGS ====================
     
     private void configureDriverBindings() {
