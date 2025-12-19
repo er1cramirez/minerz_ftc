@@ -81,7 +81,12 @@ public class FlywheelSubsystem extends SubsystemBase {
      */
     public FlywheelSubsystem(HardwareMap hardwareMap, String motorName) {
         // Inicializar motor
-        motor = new MotorEx(hardwareMap, motorName, Motor.GoBILDA.BARE);
+        motor = new MotorEx(
+                hardwareMap,
+                motorName,
+                (int) FlywheelConstants.ENCODER_PPR,
+                FlywheelConstants.MOTOR_FREE_RPM
+        );
         
         // Configurar motor
         motor.setInverted(false);  // AJUSTAR según montaje

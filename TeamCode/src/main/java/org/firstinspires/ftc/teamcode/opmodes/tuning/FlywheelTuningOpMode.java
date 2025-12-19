@@ -88,10 +88,10 @@ public class FlywheelTuningOpMode extends OpMode {
     private static final double RPM_INCREMENT_FINE = 25.0;
     
     // ==================== VALORES DEFAULT PARA RESET ====================
-    private static final double DEFAULT_KS = 0.05;
-    private static final double DEFAULT_KV = 0.00016;
-    private static final double DEFAULT_KA = 0.0001;
-    private static final double DEFAULT_KP = 0.0005;
+    private static final double DEFAULT_KS = 0.0;
+    private static final double DEFAULT_KV = 0.0;
+    private static final double DEFAULT_KA = 0.0;
+    private static final double DEFAULT_KP = 0.0;
     private static final double DEFAULT_KI = 0.0;
     private static final double DEFAULT_KD = 0.0;
     
