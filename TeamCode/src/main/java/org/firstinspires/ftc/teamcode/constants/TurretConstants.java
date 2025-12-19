@@ -56,11 +56,11 @@ public class TurretConstants {
     // modificación en tiempo real desde el OpMode de tuning
 
     /** Constante proporcional - TUNEAR */
-    public static double kP = 0.02;
+    public static double kP = 0.08;
     /** Constante integral - TUNEAR */
     public static double kI = 0.0;
     /** Constante derivativa - TUNEAR */
-    public static double kD = 0.0;
+    public static double kD = 0.004;
     /** Feed-forward estático para compensar fricción - TUNEAR */
     public static double kF = 0.0;
 
