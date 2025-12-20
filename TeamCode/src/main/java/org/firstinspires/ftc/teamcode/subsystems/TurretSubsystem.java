@@ -9,79 +9,66 @@ import com.seattlesolvers.solverslib.controller.PIDController;
 import org.firstinspires.ftc.teamcode.constants.TurretConstants;
 
 /**
- * Subsystem para controlar la torreta rotativa.
+ * Turret subsystem
  * 
- * Características:
- * - Control de posición en grados con PID
- * - Soft limits para proteger el cableado
- * - Tracking de posición relativa al robot
- * - Modos: IDLE, HOMING, MANUAL, POSITION, TRACKING
+ * Features:
+ * - Position control in degrees with PID
+ * - Soft limits to protect wiring
+ * - Relative position tracking
+ * - States: IDLE, HOMING, MANUAL, POSITION, TRACKING
  * 
- * La posición 0° representa la torreta apuntando al frente del robot.
- * Ángulos positivos = rotación antihoraria (visto desde arriba)
- * Ángulos negativos = rotación horaria
+ * Position 0° represents the turret pointing forward.
+ * Positive angles = counter-clockwise rotation (seen from above)
+ * Negative angles = clockwise rotation
  */
 public class TurretSubsystem extends SubsystemBase {
-    
-    // ==================== ENUM DE ESTADOS ====================
     public enum TurretState {
-        /** Motor sin energía, sin control activo */
-        IDLE,
-        /** Buscando posición de referencia (home) */
-        HOMING,
-        /** Control directo por joystick, sin PID */
-        MANUAL,
-        /** Yendo a una posición específica con PID */
-        POSITION,
-        /** Siguiendo un target dinámico (visión) */
-        TRACKING
+        IDLE,// Motor off
+        HOMING,// Homing
+        MANUAL,// Manual control
+        POSITION,// PID control
+        TRACKING,// Tracking
     }
     
-    // ==================== HARDWARE ====================
     private final MotorEx motor;
-    
-    // ==================== CONTROLADOR ====================
     private final PIDController pidController;
     
-    // ==================== VARIABLES DE ESTADO ====================
     private TurretState currentState;
     private double targetAngleDeg;
-    private double homeOffsetTicks;  // Offset para calibración de home
+    private double homeOffsetTicks;
     private boolean isHomed;
     
-    // ==================== CACHE DE SENSORES ====================
     private double currentPositionDeg;
     private double currentVelocityDegPerSec;
     private double lastPositionTicks;
     private long lastUpdateTimeMs;
     
-    // ==================== CONSTRUCTOR ====================
     /**
-     * Crea el TurretSubsystem.
-     * @param hardwareMap El HardwareMap del OpMode
+     * Creates the TurretSubsystem.
+     * @param hardwareMap The HardwareMap of the OpMode
      */
     public TurretSubsystem(HardwareMap hardwareMap) {
         this(hardwareMap, TurretConstants.MOTOR_NAME);
     }
     
     /**
-     * Crea el TurretSubsystem con nombre de motor personalizado.
-     * @param hardwareMap El HardwareMap del OpMode
-     * @param motorName Nombre del motor en la configuración
+     * Creates the TurretSubsystem with a custom motor name.
+     * @param hardwareMap The HardwareMap of the OpMode
+     * @param motorName The motor name in the configuration
      */
     public TurretSubsystem(HardwareMap hardwareMap, String motorName) {
-        // Inicializar motor
+        // Initialize motor
         motor = new MotorEx(hardwareMap, motorName, Motor.GoBILDA.RPM_312);
         
-        // Configurar motor
-        motor.setInverted(false);  // AJUSTAR según montaje
+        // Configure motor
+        motor.setInverted(false);  // Adjust according to mounting
         motor.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
-        motor.setRunMode(Motor.RunMode.RawPower);  // Usaremos nuestro propio PID
+        motor.setRunMode(Motor.RunMode.RawPower);  // Use our own PID
         
-        // Configurar conversión de unidades (ticks -> grados)
+        // Configure unit conversion (ticks -> degrees)
         motor.setDistancePerPulse(TurretConstants.DEGREES_PER_TICK);
         
-        // Inicializar controlador PID
+        // Initialize PID controller
         pidController = new PIDController(
             TurretConstants.kP,
             TurretConstants.kI,
@@ -89,90 +76,86 @@ public class TurretSubsystem extends SubsystemBase {
         );
         pidController.setTolerance(TurretConstants.POSITION_TOLERANCE_DEG);
         
-        // Inicializar estado
+        // Initialize state
         currentState = TurretState.IDLE;
         targetAngleDeg = 0.0;
         homeOffsetTicks = 0.0;
         isHomed = false;
         
-        // Inicializar cache
+        // Initialize cache
         currentPositionDeg = 0.0;
         currentVelocityDegPerSec = 0.0;
         lastPositionTicks = 0.0;
         lastUpdateTimeMs = System.currentTimeMillis();
         
-        // Resetear encoder
+        // Reset encoder
         motor.resetEncoder();
     }
     
-    // ==================== PERIODIC ====================
     @Override
     public void periodic() {
-        // Actualizar lecturas de sensores
+        // Update sensor readings
         updateSensorCache();
         
-        // Ejecutar lógica según estado
+        // Execute logic based on state
         switch (currentState) {
             case POSITION:
             case TRACKING:
                 executePositionControl();
                 break;
             case MANUAL:
-                // El control manual se maneja en setManualPower()
                 break;
             case HOMING:
-                // El homing se maneja en el comando de homing
                 break;
             case IDLE:
             default:
-                // No hacer nada
                 break;
         }
     }
     
     /**
-     * Actualiza el cache de lecturas de sensores.
+     * Updates the sensor readings cache.
      */
     private void updateSensorCache() {
         long currentTimeMs = System.currentTimeMillis();
         double deltaTimeSec = (currentTimeMs - lastUpdateTimeMs) / 1000.0;
         
-        // Obtener posición actual en ticks y convertir a grados
+        // Get current position in ticks and convert to degrees
         double currentTicks = motor.getCurrentPosition();
         currentPositionDeg = TurretConstants.ticksToDegrees(currentTicks - homeOffsetTicks);
         
-        // Calcular velocidad
+        // Calculate velocity
         if (deltaTimeSec > 0) {
             double deltaTicks = currentTicks - lastPositionTicks;
             currentVelocityDegPerSec = TurretConstants.ticksToDegrees(deltaTicks) / deltaTimeSec;
         }
         
-        // Actualizar valores anteriores
+        // Update previous values
         lastPositionTicks = currentTicks;
         lastUpdateTimeMs = currentTimeMs;
     }
     
     /**
-     * Ejecuta el control PID de posición.
+     * Executes the position PID control.
      */
     private void executePositionControl() {
-        // Actualizar coeficientes PID (permite tuning en tiempo real)
+        // Update PID coefficients (allows tuning in real-time)
         pidController.setPID(
             TurretConstants.kP,
             TurretConstants.kI,
             TurretConstants.kD
         );
         
-        // Calcular salida PID
+        // Calculate PID output
         double output = pidController.calculate(currentPositionDeg, targetAngleDeg);
         
-        // Agregar feed-forward si es necesario
+        // Add feed-forward if necessary
         output += Math.signum(targetAngleDeg - currentPositionDeg) * TurretConstants.kF;
         
-        // Limitar potencia
+        // Limit power
         output = clampPower(output);
         
-        // Verificar soft limits antes de aplicar potencia
+        // Verify soft limits before applying power
         if (!isSafeToMove(output)) {
             output = 0;
         }
@@ -180,24 +163,22 @@ public class TurretSubsystem extends SubsystemBase {
         motor.set(output);
     }
     
-    // ==================== MÉTODOS DE ACCIÓN ====================
-    
     /**
-     * Establece la posición objetivo de la torreta.
-     * Cambia al estado POSITION y usa control PID.
-     * @param angleDeg Ángulo objetivo en grados (0 = frente del robot)
+     * Sets the target position of the turret.
+     * Changes to the POSITION state and uses PID control.
+     * @param angleDeg Target angle in degrees (0 = front of the robot)
      */
     public void setTargetPosition(double angleDeg) {
-        // Limitar al rango permitido
+        // Limit to allowed range
         targetAngleDeg = TurretConstants.clampAngle(angleDeg);
         currentState = TurretState.POSITION;
-        pidController.reset();  // Resetear acumulador integral
+        pidController.reset();  // Reset integral accumulator
     }
     
     /**
-     * Establece la posición objetivo para tracking (sin resetear PID).
-     * Usado para seguimiento continuo de targets dinámicos.
-     * @param angleDeg Ángulo objetivo en grados
+     * Sets the target position for tracking (without resetting PID).
+     * Used for continuous tracking of dynamic targets.
+     * @param angleDeg Target angle in degrees
      */
     public void setTrackingTarget(double angleDeg) {
         targetAngleDeg = TurretConstants.clampAngle(angleDeg);
@@ -208,27 +189,26 @@ public class TurretSubsystem extends SubsystemBase {
     }
 
     /**
-     * Ajusta el ángulo objetivo relativo a la posición actual.
-     * Útil para lazos de visión donde se calcula un error relativo (bearing).
-     * @param deltaDeg Cambio en grados (positivo = izquierda/antihorario)
+     * Adjusts the target angle relative to the current position.
+     * Useful for vision loops where a relative error (bearing) is calculated.
+     * @param deltaDeg Change in degrees (positive = left/counter-clockwise)
      */
     public void adjustAngle(double deltaDeg) {
-        // Usamos setTrackingTarget para no resetear el PID si ya estamos trackeando
-        // El nuevo target es la posición actual + el error medido
+        // Use setTrackingTarget to not reset PID if already tracking
         setTrackingTarget(currentPositionDeg + deltaDeg);
     }
     
     /**
-     * Control manual de la torreta con potencia directa.
-     * @param power Potencia del motor (-1.0 a 1.0)
+     * Manual control of the turret with direct power.
+     * @param power Motor power (-1.0 to 1.0)
      */
     public void setManualPower(double power) {
         currentState = TurretState.MANUAL;
         
-        // Escalar potencia
+        // Scale power
         double scaledPower = power * TurretConstants.MANUAL_POWER_SCALE;
         
-        // Verificar soft limits
+        // Verify soft limits
         if (!isSafeToMove(scaledPower)) {
             scaledPower = 0;
         }
@@ -237,7 +217,7 @@ public class TurretSubsystem extends SubsystemBase {
     }
     
     /**
-     * Detiene la torreta y cambia a estado IDLE.
+     * Stops the turret and changes to IDLE state.
      */
     public void stop() {
         currentState = TurretState.IDLE;
@@ -246,8 +226,8 @@ public class TurretSubsystem extends SubsystemBase {
     }
     
     /**
-     * Establece la posición actual como "home" (0 grados).
-     * Usar cuando la torreta está físicamente en la posición de referencia.
+     * Sets the current position as "home" (0 degrees).
+     * Use when the turret is physically at the reference position.
      */
     public void setCurrentPositionAsHome() {
         homeOffsetTicks = motor.getCurrentPosition();
@@ -257,7 +237,7 @@ public class TurretSubsystem extends SubsystemBase {
     }
     
     /**
-     * Resetea el home offset (para re-calibración).
+     * Resets the home offset (for re-calibration).
      */
     public void resetHome() {
         homeOffsetTicks = 0.0;
@@ -266,74 +246,72 @@ public class TurretSubsystem extends SubsystemBase {
     }
     
     /**
-     * Cambia al estado de homing.
+     * Changes to homing state.
      */
     public void startHoming() {
         currentState = TurretState.HOMING;
     }
     
     /**
-     * Mueve la torreta con potencia directa (para homing).
-     * NO cambia el estado.
-     * @param power Potencia del motor
+     * Moves the turret with direct power (for homing).
+     * Does not change the state.
+     * @param power Motor power (-1.0 to 1.0)
      */
     public void setRawPower(double power) {
         motor.set(clampPower(power));
     }
     
-    // ==================== MÉTODOS DE CONSULTA ====================
-    
     /**
-     * @return Estado actual de la torreta
+     * @return Current state of the turret
      */
     public TurretState getState() {
         return currentState;
     }
     
     /**
-     * @return Nombre del estado actual (para telemetría)
+     * @return Current state name (for telemetry)
      */
     public String getStateName() {
         return currentState.name();
     }
     
     /**
-     * @return Posición actual en grados relativa al home
+     * @return Current position in degrees relative to home
      */
     public double getCurrentAngleDeg() {
         return currentPositionDeg;
     }
     
     /**
-     * @return Posición objetivo actual en grados
+     * @return Current target angle in degrees
      */
     public double getTargetAngleDeg() {
         return targetAngleDeg;
     }
     
     /**
-     * @return Error de posición actual (target - current) en grados
+     * @return Position error (target - current) in degrees
      */
     public double getPositionErrorDeg() {
         return targetAngleDeg - currentPositionDeg;
     }
     
     /**
-     * @return Velocidad actual en grados por segundo
+     * @return Current velocity in degrees per second
      */
     public double getVelocityDegPerSec() {
         return currentVelocityDegPerSec;
     }
     
     /**
-     * @return true si la torreta está en la posición objetivo (dentro de tolerancia)
+     * @return true if the turret is at the target position (within tolerance)
      */
     public boolean isAtTarget() {
         return Math.abs(getPositionErrorDeg()) <= TurretConstants.POSITION_TOLERANCE_DEG;
     }
     
     /**
-     * @return true si la torreta está en la posición objetivo Y estable (baja velocidad)
+     * @return true if the turret is at the target position and stable (low velocity)
      */
     public boolean isAtTargetAndStable() {
         return isAtTarget() && 
@@ -341,58 +319,52 @@ public class TurretSubsystem extends SubsystemBase {
     }
     
     /**
-     * @return true si la torreta ha sido calibrada (home establecido)
+     * @return true if the turret has been calibrated (home set)
      */
     public boolean isHomed() {
         return isHomed;
     }
     
     /**
-     * @return true si el estado actual es IDLE
+     * @return true if the current state is IDLE
      */
     public boolean isIdle() {
         return currentState == TurretState.IDLE;
     }
     
     /**
-     * @return true si está en control de posición (POSITION o TRACKING)
+     * @return true if the turret is in position control (POSITION or TRACKING)
      */
     public boolean isInPositionControl() {
         return currentState == TurretState.POSITION || currentState == TurretState.TRACKING;
     }
     
     /**
-     * @return Posición actual del encoder en ticks (raw)
+     * @return Current position of the encoder in ticks (raw)
      */
     public double getRawEncoderTicks() {
         return motor.getCurrentPosition();
     }
     
     /**
-     * @return Potencia actual del motor
+     * @return Current motor power
      */
     public double getMotorPower() {
         return motor.get();
     }
     
     /**
-     * Verifica si un ángulo específico está dentro del rango permitido.
-     * @param angleDeg Ángulo a verificar
-     * @return true si está en rango
+     * @return true if a specific angle is within the allowed range
      */
     public boolean isAngleReachable(double angleDeg) {
         return TurretConstants.isAngleInRange(angleDeg);
     }
     
-    // ==================== MÉTODOS PRIVADOS DE UTILIDAD ====================
-    
     /**
-     * Verifica si es seguro moverse en la dirección indicada.
-     * @param power Potencia que se quiere aplicar (signo indica dirección)
-     * @return true si es seguro moverse
+     * @return true if it is safe to move in the specified direction
      */
     private boolean isSafeToMove(double power) {
-        // Si no está homeado, permitir movimiento (para homing manual)
+        // If not homed, allow movement (for manual homing)
         if (!isHomed) {
             return true;
         }
@@ -414,9 +386,7 @@ public class TurretSubsystem extends SubsystemBase {
     }
     
     /**
-     * Limita la potencia al rango permitido.
-     * @param power Potencia sin limitar
-     * @return Potencia limitada a [-MAX_POWER, MAX_POWER]
+     * @return Power clamped to [-MAX_POWER, MAX_POWER]
      */
     private double clampPower(double power) {
         return Math.max(-TurretConstants.MAX_POWER, 

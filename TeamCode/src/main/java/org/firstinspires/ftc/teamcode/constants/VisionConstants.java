@@ -1,123 +1,186 @@
-// constants/VisionConstants.java
 package org.firstinspires.ftc.teamcode.constants;
 
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
 /**
  * Constantes para el VisionSubsystem.
- * Incluye calibración de cámara, IDs de AprilTags y parámetros de detección.
+ * 
+ * ═══════════════════════════════════════════════════════════════════════════
+ * CALIBRACIÓN REQUERIDA
+ * ═══════════════════════════════════════════════════════════════════════════
+ * 
+ * Antes de usar en competencia, calibra:
+ * 
+ * 1. OFFSET DE CÁMARA (medir físicamente):
+ *    - CAMERA_FORWARD_OFFSET_INCHES
+ *    - CAMERA_LEFT_OFFSET_INCHES
+ *    - CAMERA_UP_OFFSET_INCHES
+ *    - CAMERA_HEADING_OFFSET_DEG
+ * 
+ * 2. LENS INTRINSICS (usar calibración de cámara):
+ *    - FX, FY, CX, CY
+ *    - O dejar valores default y el SDK intentará cargar calibración predefinida
+ * 
+ * 3. EXPOSICIÓN Y GANANCIA (usar VisionExposureTuningOpMode):
+ *    - MANUAL_EXPOSURE_MS
+ *    - MANUAL_GAIN
+ * 
+ * ═══════════════════════════════════════════════════════════════════════════
  */
 public class VisionConstants {
-    
-    // ===== HARDWARE =====
-    public static final String CAMERA_NAME = "Camera_1";
-    
-    // ===== RESOLUCIÓN Y PERFORMANCE =====
-    // OV9281 puede hacer 640x480 @ 60fps o 1280x720 @ 30fps
-    public static final int CAMERA_WIDTH = 640;
-    public static final int CAMERA_HEIGHT = 480;
-    public static final int TARGET_FPS = 60;  // Empezar alto, ajustar si CPU es problema
-    
-    /**
-     * Decimation reduce la resolución de procesamiento.
-     * - 1: Máxima calidad (lento)
-     * - 2: Balance (RECOMENDADO)
-     * - 3: Rápido pero menos preciso
-     */
-    public static final float DECIMATION = 2.0f;
 
-    // ===== OPTIMIZED EXPOSURE =====
+    // ═══════════════════════════════════════════════════════════════════════
+    // HARDWARE
+    // ═══════════════════════════════════════════════════════════════════════
+    
+    /** Nombre de la cámara en la configuración del robot */
+    public static final String CAMERA_NAME = "Camera_1";
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // OFFSET DE CÁMARA RESPECTO A LA TORRETA
+    // ═══════════════════════════════════════════════════════════════════════
+    // 
+    // La cámara está montada en la torreta. Estos valores definen el offset
+    // desde el centro de rotación de la torreta hasta el lente de la cámara.
+    // 
+    // Sistema de coordenadas (visto desde arriba, torreta apuntando "adelante"):
+    //   +X = adelante (dirección que apunta la torreta)
+    //   +Y = izquierda
+    //   +Z = arriba
+    //
+    // IMPORTANTE: Medir físicamente y actualizar estos valores.
+    
+    /** Offset hacia adelante de la cámara respecto a la torreta (pulgadas) */
+    public static final double CAMERA_FORWARD_OFFSET_INCHES = 0.0;  // TODO: Calibrar
+    
+    /** Offset hacia la izquierda de la cámara respecto a la torreta (pulgadas) */
+    public static final double CAMERA_LEFT_OFFSET_INCHES = 0.0;     // TODO: Calibrar
+    
+    /** Offset hacia arriba de la cámara respecto a la torreta (pulgadas) */
+    public static final double CAMERA_UP_OFFSET_INCHES = 6.0;       // TODO: Calibrar
+    
+    /** Offset de heading de la cámara respecto a la torreta (grados) */
+    // Si la cámara no mira exactamente hacia donde apunta la torreta
+    public static final double CAMERA_HEADING_OFFSET_DEG = 0.0;     // TODO: Calibrar
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // OFFSET DE TORRETA RESPECTO AL CENTRO DEL ROBOT
+    // ═══════════════════════════════════════════════════════════════════════
+    // 
+    // La torreta gira sobre un punto que puede no ser el centro del robot.
+    // Estos valores definen el vector fijo desde el centro del robot al eje de la torreta.
+    //
+    // Sistema de coordenadas (Robot Frame):
+    //   +X = adelante del robot
+    //   +Y = izquierda del robot
+    
+    /** Distancia desde el centro del robot al eje de rotación de la torreta en X (pulgadas) */
+    public static final double TURRET_FORWARD_OFFSET_INCHES = 0.0;  // TODO: Calibrar
+    
+    /** Distancia desde el centro del robot al eje de rotación de la torreta en Y (pulgadas) */
+    public static final double TURRET_LEFT_OFFSET_INCHES = 0.0;     // TODO: Calibrar
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // LENS INTRINSICS (Calibración de cámara)
+    // ═══════════════════════════════════════════════════════════════════════
+    //
+    // Estos valores mejoran la precisión de las mediciones de pose.
+    // Si no están calibrados, el SDK intentará usar valores predefinidos
+    // para cámaras conocidas.
+    //
+    // Para calibrar: usar herramienta de calibración de OpenCV o similar.
+    // Estos valores son ejemplo para Arducam OV9281 a 640x480.
+    
+    public static final double FX = 545.55;  // Focal length X
+    public static final double FY = 544.19;  // Focal length Y
+    public static final double CX = 325.87;  // Principal point X
+    public static final double CY = 259.50;  // Principal point Y
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // EXPOSICIÓN Y GANANCIA
+    // ═══════════════════════════════════════════════════════════════════════
+    //
+    // Usar VisionExposureTuningOpMode para encontrar valores óptimos.
+    // Objetivo: exposición más BAJA que detecte de forma confiable.
+    // Menor exposición = menos motion blur.
+    
+    /** Si true, usa exposición manual. Si false, usa auto-exposición. */
+    public static final boolean USE_MANUAL_EXPOSURE = true;
+    
+    /** Exposición manual en milisegundos (típico: 5-15 ms) */
+    public static final int MANUAL_EXPOSURE_MS = 6;  // TODO: Calibrar con tuning OpMode
+    
+    /** Ganancia manual (típico: máximo disponible) */
+    public static final int MANUAL_GAIN = 250;       // TODO: Calibrar con tuning OpMode
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // TAG IDs - DECODE 2025-2026
+    // ═══════════════════════════════════════════════════════════════════════
+    
+    // Secuencias del obelisco
+    public static final int TAG_SEQUENCE_GPP = 21;  // Green-Purple-Purple
+    public static final int TAG_SEQUENCE_PGP = 22;  // Purple-Green-Purple
+    public static final int TAG_SEQUENCE_PPG = 23;  // Purple-Purple-Green
+
+    // Goals
+    public static final int TAG_GOAL_RED = 24;
+    public static final int TAG_GOAL_BLUE = 20;
+
     /**
-     * Exposure time in milliseconds for high-speed tracking (reduces motion blur).
-     * Typical for global shutter OV9281: 1-5ms.
+     * Convierte un tag ID a string de secuencia.
+     * @return "GPP", "PGP", "PPG" o null si no es tag de secuencia
      */
-    public static final long OPTIMIZED_EXPOSURE_MS = 2;
+    public static String getSequenceFromTagId(int tagId) {
+        switch (tagId) {
+            case TAG_SEQUENCE_GPP: return "GPP";
+            case TAG_SEQUENCE_PGP: return "PGP";
+            case TAG_SEQUENCE_PPG: return "PPG";
+            default: return null;
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // VALIDACIÓN DE DETECCIONES
+    // ═══════════════════════════════════════════════════════════════════════
+    //
+    // Estos umbrales determinan si una detección es "confiable".
+    // Ajustar según condiciones de campo.
     
     /**
-     * Gain value for low exposure (compensates for darkness).
-     * Check camera max gain (usually 255 or higher).
+     * Ambigüedad máxima permitida (0 = perfecta, >0.2 = pobre).
+     * El SDK usa decisionMargin = 1/ambiguity.
+     * Con MAX_AMBIGUITY = 0.15, requerimos decisionMargin >= 6.67
      */
-    public static final int OPTIMIZED_GAIN = 250;
+    public static final double MAX_AMBIGUITY = 0.15;
     
-    // ===== APRILTAG IDS =====
-    /**
-     * IDs de secuencia (solo para detección inicial en auto).
-     * 21: Green, Purple, Purple
-     * 22: Purple, Green, Purple
-     * 23: Purple, Purple, Green
-     */
-    public static final int[] SEQUENCE_IDS = {21, 22, 23};
+    /** Distancia mínima de detección en pulgadas */
+    public static final double MIN_DETECTION_RANGE_INCHES = 6.0;
     
-    /**
-     * IDs de targets para aiming.
-     * 20: Azul
-     * 24: Rojo
-     */
-    public static final int TARGET_ID_BLUE = 20;
-    public static final int TARGET_ID_RED = 24;
+    /** Distancia máxima de detección en pulgadas (~200" = diagonal de cancha) */
+    public static final double MAX_DETECTION_RANGE_INCHES = 200.0;
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // UNIDADES
+    // ═══════════════════════════════════════════════════════════════════════
     
-    // ===== TAMAÑO FÍSICO DEL APRILTAG =====
-    /**
-     * Tamaño real del cuadrado negro del AprilTag en inches.
-     * FTC usa tags de 6 inches.
-     */
-    public static final double TAG_SIZE = 6.0;  // inches
-    
-    // ===== POSICIÓN DE CÁMARA EN TURRET =====
-    /**
-     * La cámara está montada EN EL TURRET, por lo que gira con él.
-     * Offsets relativos al centro de rotación del turret.
-     * 
-     * Sistema de coordenadas:
-     * - X: Positivo hacia adelante (dirección del shooter)
-     * - Y: Positivo hacia la izquierda
-     * - Z: Positivo hacia arriba
-     */
-    // TODO: MEDIR ESTOS VALORES EN EL ROBOT REAL
-    public static final double CAMERA_OFFSET_X = 0.0;  // inches (adelante/atrás)
-    public static final double CAMERA_OFFSET_Y = 0.0;  // inches (izquierda/derecha)
-    public static final double CAMERA_OFFSET_Z = 0.0;  // inches (arriba/abajo del eje turret)
-    
-    /**
-     * Ángulo de inclinación de la cámara (pitch).
-     * - 0°: Horizontal (perpendicular al suelo)
-     * - +15°: Inclinada hacia arriba
-     * - -15°: Inclinada hacia abajo
-     */
-    // TODO: MEDIR ESTE VALOR EN EL ROBOT REAL
-    public static final double CAMERA_PITCH_DEGREES = 0.0;
-    
-    // ===== CALIBRACIÓN INTRÍNSECOS (OPCIONAL) =====
-    /**
-     * Usar calibración personalizada o dejar que VisionPortal use sus defaults.
-     * Empezar en FALSE. Si la detección de distancia no es precisa, cambiar a TRUE
-     * y calibrar con AprilTag Calibration Tool.
-     */
-    public static final boolean USE_CUSTOM_CALIBRATION = true;
-    
-    // Valores típicos para OV9281 (solo si USE_CUSTOM_CALIBRATION = true)
-    public static final double FX = 545.55;
-    public static final double FY = 544.19;
-    public static final double CX = 325.87;
-    public static final double CY = 259.50;
-    
-    // ===== TOLERANCIAS =====
-    /**
-     * Tolerancia de alineación en grados.
-     * Si |bearing| < ALIGNMENT_TOLERANCE, se considera alineado.
-     */
-    public static final double ALIGNMENT_TOLERANCE_DEGREES = 2.0;
-    
-    /**
-     * Tiempo máximo sin detección antes de considerar target "perdido".
-     */
-    public static final long TARGET_LOST_TIMEOUT_MS = 500;  // 0.5 segundos
-    
-    /**
-     * Distancia máxima de detección válida (filtrar falsos positivos lejanos).
-     */
-    public static final double MAX_DETECTION_RANGE_INCHES = 120.0;  // 10 pies
-    
-    // ===== UNIDADES =====
     public static final DistanceUnit DISTANCE_UNIT = DistanceUnit.INCH;
+    public static final AngleUnit ANGLE_UNIT = AngleUnit.DEGREES;
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // STREAMING / DEBUG
+    // ═══════════════════════════════════════════════════════════════════════
+    
+    /** Habilitar vista en vivo (desactivar en competencia para ahorrar CPU) */
+    public static final boolean ENABLE_LIVE_VIEW = false;
+    
+    public static final int STREAM_WIDTH = 640;
+    public static final int STREAM_HEIGHT = 480;
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // TIMEOUTS
+    // ═══════════════════════════════════════════════════════════════════════
+    
+    /** Timeout para comandos que esperan detección (ms) */
+    public static final int DETECTION_TIMEOUT_MS = 3000;
 }
