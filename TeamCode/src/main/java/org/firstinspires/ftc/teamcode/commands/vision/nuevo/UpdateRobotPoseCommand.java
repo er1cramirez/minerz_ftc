@@ -1,13 +1,13 @@
-package org.firstinspires.ftc.teamcode.commands.vision;
+package org.firstinspires.ftc.teamcode.commands.vision.nuevo;
 
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.seattlesolvers.solverslib.command.CommandBase;
 
-import org.firstinspires.ftc.teamcode.constants.VisionConstants;
+import org.firstinspires.ftc.teamcode.subsystems.vision.VisionConstants;
 import org.firstinspires.ftc.teamcode.subsystems.DriveSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.TurretSubsystem;
-import org.firstinspires.ftc.teamcode.subsystems.VisionSubsystem;
-import org.firstinspires.ftc.teamcode.subsystems.VisionSubsystem.FieldPose;
+import org.firstinspires.ftc.teamcode.subsystems.vision.VisionSubsystem;
+import org.firstinspires.ftc.teamcode.subsystems.vision.VisionSubsystem.FieldPose;
 
 import java.util.function.Consumer;
 
@@ -85,7 +85,7 @@ public class UpdateRobotPoseCommand extends CommandBase {
         }
 
         // Obtener ángulo de torreta y heading actual del robot
-        double turretAngle = turret.getAngle();
+        double turretAngle = turret.getCurrentAngleDeg();
         double currentHeading = drive.getHeading();
 
         // Intentar obtener pose desde visión

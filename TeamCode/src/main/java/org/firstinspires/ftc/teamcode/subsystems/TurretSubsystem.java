@@ -206,6 +206,17 @@ public class TurretSubsystem extends SubsystemBase {
             pidController.reset();
         }
     }
+
+    /**
+     * Ajusta el ángulo objetivo relativo a la posición actual.
+     * Útil para lazos de visión donde se calcula un error relativo (bearing).
+     * @param deltaDeg Cambio en grados (positivo = izquierda/antihorario)
+     */
+    public void adjustAngle(double deltaDeg) {
+        // Usamos setTrackingTarget para no resetear el PID si ya estamos trackeando
+        // El nuevo target es la posición actual + el error medido
+        setTrackingTarget(currentPositionDeg + deltaDeg);
+    }
     
     /**
      * Control manual de la torreta con potencia directa.

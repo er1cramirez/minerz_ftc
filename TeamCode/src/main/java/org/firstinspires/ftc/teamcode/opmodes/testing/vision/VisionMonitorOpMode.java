@@ -1,13 +1,13 @@
-package org.firstinspires.ftc.teamcode.opmodes.test;
+package org.firstinspires.ftc.teamcode.opmodes.testing.vision;
 
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.seattlesolvers.solverslib.command.CommandOpMode;
 import com.seattlesolvers.solverslib.command.RunCommand;
 
-import org.firstinspires.ftc.teamcode.constants.VisionConstants;
-import org.firstinspires.ftc.teamcode.subsystems.VisionSubsystem;
-import org.firstinspires.ftc.teamcode.subsystems.VisionSubsystem.Alliance;
-import org.firstinspires.ftc.teamcode.subsystems.VisionSubsystem.RBE;
+import org.firstinspires.ftc.teamcode.subsystems.vision.VisionConstants;
+import org.firstinspires.ftc.teamcode.subsystems.vision.VisionSubsystem;
+import org.firstinspires.ftc.teamcode.subsystems.vision.VisionSubsystem.Alliance;
+import org.firstinspires.ftc.teamcode.subsystems.vision.VisionSubsystem.RBE;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 
 import java.util.List;
@@ -123,9 +123,9 @@ public class VisionMonitorOpMode extends CommandOpMode {
         switch (id) {
             case VisionConstants.TAG_GOAL_RED:    return "Goal Rojo";
             case VisionConstants.TAG_GOAL_BLUE:   return "Goal Azul";
-            case VisionConstants.TAG_SEQUENCE_YYP: return "Seq YYP";
-            case VisionConstants.TAG_SEQUENCE_YPY: return "Seq YPY";
-            case VisionConstants.TAG_SEQUENCE_PYY: return "Seq PYY";
+            case VisionConstants.TAG_SEQUENCE_GPP: return "Seq YYP";
+            case VisionConstants.TAG_SEQUENCE_PGP: return "Seq YPY";
+            case VisionConstants.TAG_SEQUENCE_PPG: return "Seq PYY";
             default: return "Desconocido";
         }
     }

@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.constants;
+package org.firstinspires.ftc.teamcode.subsystems.vision;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
@@ -10,7 +10,8 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 public class VisionConstants {
 
     // ===== HARDWARE =====
-    public static final String CAMERA_NAME = "arducam";
+    public static final String CAMERA_NAME = "Camera_1" +
+            "";
 
     // ===== CAMERA OFFSET RESPECTO A TORRETA =====
     // Estos valores deben calibrarse midiendo físicamente
@@ -21,22 +22,28 @@ public class VisionConstants {
     public static final double CAMERA_UP_OFFSET_INCHES = 6.0;       // TODO: Calibrar
     public static final double CAMERA_HEADING_OFFSET_DEG = 0.0;     // TODO: Calibrar
 
+
+    public static final double FX = 545.55;
+    public static final double FY = 544.19;
+    public static final double CX = 325.87;
+    public static final double CY = 259.50;
+
     // ===== APRILTAG IDs - DECODE 2025-2026 =====
     // Secuencias del obelisco
-    public static final int TAG_SEQUENCE_YYP = 21;  // Secuencia: Yellow-Yellow-Purple
-    public static final int TAG_SEQUENCE_YPY = 22;  // Secuencia: Yellow-Purple-Yellow
-    public static final int TAG_SEQUENCE_PYY = 23;  // Secuencia: Purple-Yellow-Yellow
+    public static final int TAG_SEQUENCE_GPP = 21;  // Secuencia: Green-Purple-Purple
+    public static final int TAG_SEQUENCE_PGP = 22;  // Secuencia: Purple-Green-Purple
+    public static final int TAG_SEQUENCE_PPG = 23;  // Secuencia: Purple-Purple-Green
 
     // Goals
-    public static final int TAG_GOAL_RED = 20;
-    public static final int TAG_GOAL_BLUE = 24;
+    public static final int TAG_GOAL_RED = 24;
+    public static final int TAG_GOAL_BLUE = 20;
 
     // ===== SECUENCIAS (mapeo de tag ID a string) =====
     public static String getSequenceFromTagId(int tagId) {
         switch (tagId) {
-            case TAG_SEQUENCE_YYP: return "YYP";
-            case TAG_SEQUENCE_YPY: return "YPY";
-            case TAG_SEQUENCE_PYY: return "PYY";
+            case TAG_SEQUENCE_GPP: return "GPP";
+            case TAG_SEQUENCE_PGP: return "PGP";
+            case TAG_SEQUENCE_PPG: return "PPG";
             default: return null;
         }
     }
@@ -47,7 +54,7 @@ public class VisionConstants {
 
     // Rango válido de detección (pulgadas)
     public static final double MIN_DETECTION_RANGE_INCHES = 6.0;
-    public static final double MAX_DETECTION_RANGE_INCHES = 72.0;  // 6 feet
+    public static final double MAX_DETECTION_RANGE_INCHES = 122.0;  // 6 feet
 
     // ===== UNIDADES DEFAULT =====
     public static final DistanceUnit DISTANCE_UNIT = DistanceUnit.INCH;

@@ -1,10 +1,11 @@
-package org.firstinspires.ftc.teamcode.subsystems;
+package org.firstinspires.ftc.teamcode.subsystems.vision;
 
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.seattlesolvers.solverslib.command.SubsystemBase;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
-import org.firstinspires.ftc.teamcode.constants.VisionConstants;
+//import org.firstinspires.ftc.teamcode.subsystems.vision.VisionConstants;
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagGameDatabase;
@@ -131,14 +132,17 @@ public class VisionSubsystem extends SubsystemBase {
      * @param hardwareMap HardwareMap del OpMode
      * @param cameraName  Nombre de la cámara en la configuración
      */
-    public VisionSubsystem(HardwareMap hardwareMap, String cameraName) {
+    public VisionSubsystem(HardwareMap hardwareMap, String camera Name) {
         // Crear AprilTagProcessor con la librería de Decode
         aprilTagProcessor = new AprilTagProcessor.Builder()
-                .setTagLibrary(AprilTagGameDatabase.getDecodeTagLibrary())
                 .setDrawTagOutline(true)
                 .setDrawTagID(true)
                 .setDrawCubeProjection(false)
                 .setDrawAxes(false)
+                .setTagFamily(AprilTagProcessor.TagFamily.TAG_36h11)
+                .setTagLibrary(AprilTagGameDatabase.getDecodeTagLibrary())
+                .setOutputUnits(org.firstinspires.ftc.teamcode.constants.VisionConstants.DISTANCE_UNIT, AngleUnit.DEGREES)
+                .setLensIntrinsics(VisionConstants.FX, VisionConstants.FY, VisionConstants.CX, VisionConstants.CY)
                 .build();
 
         // Crear VisionPortal

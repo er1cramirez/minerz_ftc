@@ -1,10 +1,10 @@
-package org.firstinspires.ftc.teamcode.commands.vision;
+package org.firstinspires.ftc.teamcode.commands.vision.nuevo;
 
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.seattlesolvers.solverslib.command.CommandBase;
 
-import org.firstinspires.ftc.teamcode.constants.VisionConstants;
-import org.firstinspires.ftc.teamcode.subsystems.VisionSubsystem;
+import org.firstinspires.ftc.teamcode.subsystems.vision.VisionConstants;
+import org.firstinspires.ftc.teamcode.subsystems.vision.VisionSubsystem;
 
 import java.util.function.Consumer;
 

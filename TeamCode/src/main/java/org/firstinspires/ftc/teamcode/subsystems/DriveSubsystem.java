@@ -53,6 +53,11 @@ public class DriveSubsystem extends SubsystemBase {
         follower.followPath(path);
         currentMode = DriveMode.AUTO;
     }
+
+    public void setPose(double x, double y, double heading) {
+        Pose pose = new Pose(x, y, heading);
+        follower.setPose(pose);
+    }
     
     /**
      * Sigue un PathChain (secuencia de paths).

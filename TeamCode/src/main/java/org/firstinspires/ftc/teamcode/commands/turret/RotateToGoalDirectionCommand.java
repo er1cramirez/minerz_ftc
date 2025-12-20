@@ -3,7 +3,7 @@ package org.firstinspires.ftc.teamcode.commands.turret;
 import com.seattlesolvers.solverslib.command.CommandBase;
 
 import org.firstinspires.ftc.teamcode.subsystems.TurretSubsystem;
-import org.firstinspires.ftc.teamcode.subsystems.VisionSubsystem.Alliance;
+import org.firstinspires.ftc.teamcode.subsystems.vision.VisionSubsystem.Alliance;
 
 /**
  * Comando para rotar la torreta hacia la dirección conocida del goal.
@@ -37,7 +37,7 @@ public class RotateToGoalDirectionCommand extends CommandBase {
             ? ANGLE_TO_RED_GOAL_DEG 
             : ANGLE_TO_BLUE_GOAL_DEG;
         
-        turret.rotateTo(targetAngle);
+        turret.setTargetPosition(targetAngle);
     }
 
     @Override
@@ -48,7 +48,7 @@ public class RotateToGoalDirectionCommand extends CommandBase {
     @Override
     public void end(boolean interrupted) {
         if (!interrupted) {
-            turret.hold();
+            turret.setTargetPosition(turret.getCurrentAngleDeg());
         }
     }
 }
