@@ -1,6 +1,9 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
 import com.pedropathing.follower.Follower;
+import com.pedropathing.ftc.InvertedFTCCoordinates;
+import com.pedropathing.ftc.PoseConverter;
+import com.pedropathing.geometry.PedroCoordinates;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.Path;
 import com.pedropathing.paths.PathChain;
@@ -8,6 +11,7 @@ import com.seattlesolvers.solverslib.command.SubsystemBase;
 
 import org.firstinspires.ftc.teamcode.constants.DriveConstants;
 
+import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 
 public class DriveSubsystem extends SubsystemBase {
 
@@ -25,6 +29,19 @@ public class DriveSubsystem extends SubsystemBase {
     public DriveSubsystem(Follower follower) {
         this.follower = follower;
         this.currentMode = DriveMode.TELEOP;
+    }
+
+    /**
+     * Convierte una Pose2D del SDK de FTC a una Pose de PedroPathing.
+     * Utiliza los conversores para transformar de coordenadas FTC (invertidas para Decode)
+     * a las coordenadas de PedroPathing.
+     */
+    public static Pose convertToPedroPose(Pose2D ftcPose) {
+        // Step 1: Convert FTC Pose2D to Pedro Pose (Intermediate, Inverted FTC)
+        Pose ftcStandard = PoseConverter.pose2DToPose(ftcPose, InvertedFTCCoordinates.INSTANCE);
+        
+        // Step 2: Convert to Pedro Coordinate System
+        return ftcStandard.getAsCoordinateSystem(PedroCoordinates.INSTANCE);
     }
     
     public void startTeleOpMode() {
@@ -54,6 +71,12 @@ public class DriveSubsystem extends SubsystemBase {
         currentMode = DriveMode.AUTO;
     }
 
+    /**
+     *
+     * @param x //inch
+     * @param y //inch
+     * @param heading //Radians
+     */
     public void setPose(double x, double y, double heading) {
         Pose pose = new Pose(x, y, heading);
         follower.setPose(pose);

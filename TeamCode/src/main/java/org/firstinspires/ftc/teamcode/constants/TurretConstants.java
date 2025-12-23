@@ -46,7 +46,7 @@ public class TurretConstants {
      * Límite de rotación en sentido horario (visto desde arriba)
      * AJUSTAR según restricciones de cableado
      */
-    public static double MAX_ANGLE_DEG = 135.0;
+    public static double MAX_ANGLE_DEG = 105.0;
 
     /** Margen de seguridad antes de los límites físicos (grados) */
     public static double SOFT_LIMIT_MARGIN_DEG = 5.0;
@@ -100,6 +100,50 @@ public class TurretConstants {
     /** Posición derecha */
     public static final double POSITION_RIGHT = -90.0;
 
+
+    // ----- Tracking Behavior -----
+    
+    /**
+     * Bearing tolerance to consider "locked on" (degrees).
+     * When |bearing| < this value AND turret is stable, we're locked.
+     */
+    public static final double VISION_BEARING_TOLERANCE_DEG = 2.0;
+    
+    /**
+     * Gain applied to bearing for tracking (0.0 - 1.0).
+     * - 1.0 = Full correction each cycle (aggressive, may overshoot)
+     * - 0.5 = Half correction each cycle (smoother, slower response)
+     */
+    public static final double VISION_TRACKING_GAIN = 0.8;
+    
+    /**
+     * Minimum bearing change to apply correction (degrees).
+     * Prevents micro-adjustments that cause jitter.
+     */
+    public static final double VISION_MIN_BEARING_CHANGE_DEG = 0.5;
+    
+    // ----- State Timing -----
+    
+    /**
+     * Time to wait in HOLDING state before transitioning to SEARCHING (seconds).
+     */
+    public static final double VISION_HOLDING_TIMEOUT_SEC = 2.0;
+    
+    /**
+     * Minimum time between state transitions (seconds).
+     * Prevents rapid flickering between states.
+     */
+    public static final double VISION_STATE_DEBOUNCE_SEC = 0.1;
+    
+    /**
+     * Consecutive frames required to confirm target acquisition.
+     */
+    public static final int VISION_ACQUISITION_FRAMES = 2;
+    
+    /**
+     * Consecutive frames without detection before declaring target lost.
+     */
+    public static final int VISION_LOSS_FRAMES = 3;
     // ==================== UTILIDADES ====================
     /**
      * Convierte grados a ticks del encoder.

@@ -3,7 +3,7 @@ package org.firstinspires.ftc.teamcode.commands.turret;
 import com.seattlesolvers.solverslib.command.CommandBase;
 
 import org.firstinspires.ftc.teamcode.subsystems.TurretSubsystem;
-import org.firstinspires.ftc.teamcode.subsystems.vision.VisionSubsystem.Alliance;
+import org.firstinspires.ftc.teamcode.subsystems.VisionSubsystem.Alliance;
 
 /**
  * Comando para rotar la torreta hacia la dirección conocida del goal.
