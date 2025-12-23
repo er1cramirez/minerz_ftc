@@ -23,7 +23,7 @@ public class TeleOpMain extends CommandOpMode {
         // Subsystems
 //        drive = new DriveSubsystem(hardwareMap);
         intake = new IntakeSubsystem(hardwareMap);
-        spindexer = new SpindexerSubsystem(hardwareMap,true);
+        spindexer = new SpindexerSubsystem(hardwareMap);
         
         // Gamepads
         driverGamepad = new GamepadEx(gamepad1);
