@@ -32,14 +32,11 @@ public class FlywheelSubsystem extends SubsystemBase {
     private FlywheelState currentState;
     private double targetRPM;
     private double currentRPM;
-    
-    private double lastFeedForward;
-    private double lastPIDOutput;
-    private double lastTotalOutput;
+
+    private double lastUpdateTimeMs;
     
     private final ElapsedTime stabilityTimer;
     private final ElapsedTime spinupTimer;
-    private long lastUpdateTimeMs;
     private boolean isStable;
     
     private double currentVoltage;
@@ -79,11 +76,7 @@ public class FlywheelSubsystem extends SubsystemBase {
         currentState = FlywheelState.IDLE;
         targetRPM = 0;
         currentRPM = 0;
-        
-        // Initialize control
-        lastFeedForward = 0;
-        lastPIDOutput = 0;
-        lastTotalOutput = 0;
+
         
         // Initialize timing
         stabilityTimer = new ElapsedTime();
@@ -157,15 +150,13 @@ public class FlywheelSubsystem extends SubsystemBase {
         // 1. Calculate error
         double error = targetRPM - currentRPM;
         // 2. Calculate Feed-Forward
-        lastFeedForward = calculateFeedForward(error);
         // 3. Calculate PID
-        lastProportionalOutput = calculateProportional(error);
         // 4. Combine FF + PID
-        double rawOutput = lastFeedForward + lastProportionalOutput;
+        double rawOutput = calculateFeedForward(error) + calculateProportional(error);
         // 5. Apply voltage compensation
         double compensatedOutput = rawOutput * compensationFactor;
         // 6. Limit output
-        lastTotalOutput = clampOutput(compensatedOutput);
+        double lastTotalOutput = clampOutput(compensatedOutput);
         // 7. Apply to  motor
         motor.set(lastTotalOutput);
     }
@@ -394,27 +385,6 @@ public class FlywheelSubsystem extends SubsystemBase {
      */
     public double getVoltageCompensation() {
         return compensationFactor;
-    }
-    
-    /**
-     * @return Total power applied to the motor
-     */
-    public double getMotorPower() {
-        return lastTotalOutput;
-    }
-    
-    /**
-     * @return Feed-Forward component of the last calculation
-     */
-    public double getLastFeedForward() {
-        return lastFeedForward;
-    }
-    
-    /**
-     * @return Proportional component of the last calculation
-     */
-    public double getLastPIDOutput() {
-        return lastProportionalOutput;
     }
     
     /**
