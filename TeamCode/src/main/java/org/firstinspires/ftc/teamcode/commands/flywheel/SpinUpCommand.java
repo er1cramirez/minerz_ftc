@@ -5,18 +5,17 @@ import com.seattlesolvers.solverslib.command.CommandBase;
 import org.firstinspires.ftc.teamcode.subsystems.FlywheelSubsystem;
 
 /**
- * Comando para acelerar el flywheel a una velocidad específica.
- * Termina cuando el flywheel alcanza la velocidad y está estable.
+ * Command to spin up the flywheel to a specific RPM.
  * 
- * Uso:
+ * Usage:
  * <pre>
- * // Ir a velocidad específica
+ * // Go to specific RPM
  * new SpinUpCommand(flywheel, 3200);
  * 
- * // Con timeout
+ * // With timeout
  * new SpinUpCommand(flywheel, 3600).withTimeout(2000);
  * 
- * // Esperar solo a que llegue (sin verificar estabilidad)
+ * // Wait only until it reaches speed (don't verify stability)
  * new SpinUpCommand(flywheel, 3000, false);
  * </pre>
  */
@@ -27,22 +26,21 @@ public class SpinUpCommand extends CommandBase {
     private final boolean waitForStable;
     
     /**
-     * Crea un comando para acelerar el flywheel.
-     * Espera a que esté estable antes de terminar.
+     * Creates a command to spin up the flywheel to a specific RPM.
      * 
-     * @param flywheel El subsystem de flywheel
-     * @param targetRPM Velocidad objetivo en RPM
+     * @param flywheel The flywheel subsystem
+     * @param targetRPM The target RPM
      */
     public SpinUpCommand(FlywheelSubsystem flywheel, double targetRPM) {
         this(flywheel, targetRPM, true);
     }
     
     /**
-     * Crea un comando para acelerar el flywheel.
+     * Creates a command to spin up the flywheel to a specific RPM.
      * 
-     * @param flywheel El subsystem de flywheel
-     * @param targetRPM Velocidad objetivo en RPM
-     * @param waitForStable Si true, espera estabilidad; si false, termina al llegar a velocidad
+     * @param flywheel The flywheel subsystem
+     * @param targetRPM The target RPM
+     * @param waitForStable If true, waits for stability; if false, ends when it reaches speed
      */
     public SpinUpCommand(FlywheelSubsystem flywheel, double targetRPM, boolean waitForStable) {
         this.flywheel = flywheel;
@@ -54,23 +52,23 @@ public class SpinUpCommand extends CommandBase {
     
     @Override
     public void initialize() {
-        flywheel.setTargetRPM(targetRPM);
+        flywheel.spinUp(targetRPM);
     }
     
     @Override
     public void execute() {
-        // El control se ejecuta en periodic() del subsystem
+        // The control is executed in periodic() of the subsystem
     }
     
     @Override
     public void end(boolean interrupted) {
-        // NO detenemos el flywheel al terminar - mantiene la velocidad
-        // Esto permite encadenar con comandos de disparo
+        // We do not stop the flywheel when finished - it maintains the speed
+        // This allows chaining with shooting commands
         
         if (interrupted) {
-            // Si fue interrumpido, podríamos querer detenerlo
-            // Pero generalmente queremos mantenerlo girando
-            // flywheel.stop();  // Descomentar si se desea detener al interrumpir
+            // If interrupted, we might want to stop it
+            // But generally we want to keep it spinning
+            // flywheel.stop();  // Uncomment if you want to stop on interrupt
         }
     }
     

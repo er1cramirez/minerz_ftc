@@ -21,9 +21,9 @@ import org.firstinspires.ftc.teamcode.constants.FlywheelConstants;
 public class FlywheelSubsystem extends SubsystemBase {
     public enum FlywheelState {
         IDLE, // Motor is not running
+        IDLE_SPIN,
         SPINNING_UP, // Motor is accelerating to target speed
-        AT_SPEED, // Motor is at target speed
-        IDLE_SPIN // Motor is spinning at a low speed for stability
+        AT_SPEED // Motor is at target speed
     }
     
     private final MotorEx motor;
@@ -104,7 +104,7 @@ public class FlywheelSubsystem extends SubsystemBase {
             case IDLE_SPIN:
                 executeVelocityControl();
                 break;
-                
+
             case IDLE:
             default:
                 // Asegurar que el motor esté apagado
@@ -256,25 +256,11 @@ public class FlywheelSubsystem extends SubsystemBase {
     }
     
     /**
-     * Sets the flywheel to spin up for the far zone.
-     */
-    public void spinUpFarZone() {
-        setTargetRPM(FlywheelConstants.FAR_ZONE_RPM);
-    }
-    
-    /**
-     * Sets the flywheel to idle spin.
-     */
-    public void idleSpin() {
-        setTargetRPM(FlywheelConstants.IDLE_SPIN_RPM);
-    }
-    
-    /**
      * Sets the target RPM for the flywheel.
      * 
      * @param rpm The target RPM
      */
-    public void setTargetRPM(double rpm) {
+    public void spinUp(double rpm) {
         double clampedRPM = FlywheelConstants.clampRPM(rpm);
         if (Math.abs(clampedRPM - targetRPM) > 50) {
             spinupTimer.reset();
@@ -299,8 +285,6 @@ public class FlywheelSubsystem extends SubsystemBase {
         motor.set(0);
         isStable = false;
     }
-    
-    // ==================== MÉTODOS DE CONSULTA ====================
     
     /**
      * @return Current state of the flywheel
@@ -358,11 +342,19 @@ public class FlywheelSubsystem extends SubsystemBase {
     public boolean isIdle() {
         return currentState == FlywheelState.IDLE;
     }
+
+
+    /**
+     * Set IDLE_SPIN state
+     */
+    public void setIdleSpin() {
+        currentState = FlywheelState.IDLE_SPIN;
+    }
     
     /**
      * @return true if it is idle spinning
      */
-    public boolean isIdleSpinning() {
+    public boolean isIdleSpin() {
         return currentState == FlywheelState.IDLE_SPIN;
     }
     

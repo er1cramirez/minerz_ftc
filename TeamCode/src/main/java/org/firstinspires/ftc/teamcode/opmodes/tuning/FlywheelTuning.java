@@ -209,7 +209,7 @@ public class FlywheelTuning extends OpMode {
         // A -> Velocidad zona cercana mínima
         if (gamepad1.a && !lastG1APressed) {
             manualTargetRPM = FlywheelConstants.NEAR_ZONE_MIN_RPM;
-            flywheel.setTargetRPM(manualTargetRPM);
+            flywheel.spinUp(manualTargetRPM);
             resetAnalytics();
         }
         lastG1APressed = gamepad1.a;
@@ -217,7 +217,7 @@ public class FlywheelTuning extends OpMode {
         // B -> Velocidad zona cercana máxima
         if (gamepad1.b && !lastG1BPressed) {
             manualTargetRPM = FlywheelConstants.NEAR_ZONE_MAX_RPM;
-            flywheel.setTargetRPM(manualTargetRPM);
+            flywheel.spinUp(manualTargetRPM);
             resetAnalytics();
         }
         lastG1BPressed = gamepad1.b;
@@ -225,7 +225,7 @@ public class FlywheelTuning extends OpMode {
         // X -> Idle spin
         if (gamepad1.x && !lastG1XPressed) {
             manualTargetRPM = FlywheelConstants.IDLE_SPIN_RPM;
-            flywheel.setTargetRPM(manualTargetRPM);
+            flywheel.spinUp(manualTargetRPM);
             resetAnalytics();
         }
         lastG1XPressed = gamepad1.x;
@@ -233,7 +233,7 @@ public class FlywheelTuning extends OpMode {
         // Y -> Velocidad zona lejana
         if (gamepad1.y && !lastG1YPressed) {
             manualTargetRPM = FlywheelConstants.FAR_ZONE_RPM;
-            flywheel.setTargetRPM(manualTargetRPM);
+            flywheel.spinUp(manualTargetRPM);
             resetAnalytics();
         }
         lastG1YPressed = gamepad1.y;
@@ -241,28 +241,28 @@ public class FlywheelTuning extends OpMode {
         // DPAD UP -> +100 RPM
         if (gamepad1.dpad_up && !lastG1DpadUpPressed) {
             manualTargetRPM += RPM_INCREMENT_COARSE;
-            flywheel.setTargetRPM(manualTargetRPM);
+            flywheel.spinUp(manualTargetRPM);
         }
         lastG1DpadUpPressed = gamepad1.dpad_up;
         
         // DPAD DOWN -> -100 RPM
         if (gamepad1.dpad_down && !lastG1DpadDownPressed) {
             manualTargetRPM = Math.max(0, manualTargetRPM - RPM_INCREMENT_COARSE);
-            flywheel.setTargetRPM(manualTargetRPM);
+            flywheel.spinUp(manualTargetRPM);
         }
         lastG1DpadDownPressed = gamepad1.dpad_down;
         
         // DPAD LEFT -> +25 RPM (fino)
         if (gamepad1.dpad_left && !lastG1DpadLeftPressed) {
             manualTargetRPM += RPM_INCREMENT_FINE;
-            flywheel.setTargetRPM(manualTargetRPM);
+            flywheel.spinUp(manualTargetRPM);
         }
         lastG1DpadLeftPressed = gamepad1.dpad_left;
         
         // DPAD RIGHT -> -25 RPM (fino)
         if (gamepad1.dpad_right && !lastG1DpadRightPressed) {
             manualTargetRPM = Math.max(0, manualTargetRPM - RPM_INCREMENT_FINE);
-            flywheel.setTargetRPM(manualTargetRPM);
+            flywheel.spinUp(manualTargetRPM);
         }
         lastG1DpadRightPressed = gamepad1.dpad_right;
         
