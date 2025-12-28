@@ -1,34 +1,36 @@
 package org.firstinspires.ftc.teamcode.commands.ejector;
 
 import com.qualcomm.robotcore.util.ElapsedTime;
-import com.seattlesolvers.solverslib.command.CommandBase;
+import com.seattlesolvers.solverslib.command.SequentialCommandGroup;
 
 import org.firstinspires.ftc.teamcode.constants.EjectorConstants;
 import org.firstinspires.ftc.teamcode.subsystems.EjectorSubsystem;
 
-public class EjectCycleCommand extends CommandBase {
-    private final EjectorSubsystem ejector;
-    private final ElapsedTime timer;
+public class EjectCycleCommand extends SequentialCommandGroup {
+    private Boolean finished;
     
     public EjectCycleCommand(EjectorSubsystem ejector) {
-        this.ejector = ejector;
-        this.timer = new ElapsedTime();
+        addCommands(
+            new InstantCommand(ejector::eject, ejector),
+            new WaitCommand(EjectorConstants.Timing.EJECT_TIME_MS),
+            new InstantCommand(ejector::stow, ejector),
+            new WaitCommand(EjectorConstants.Timing.STOW_TIME_MS)
+        );
         addRequirements(ejector);
     }
-    
+
     @Override
     public void initialize() {
-        ejector.eject();
-        timer.reset();
+        finished = false;
     }
     
     @Override
     public boolean isFinished() {
-        return timer.milliseconds() >= EjectorConstants.Timing.FULL_CYCLE_TIME_MS;
+        return finished;
     }
     
     @Override
     public void end(boolean interrupted) {
-        ejector.stow();
+        finished = true;
     }
 }
