@@ -11,14 +11,12 @@ import org.firstinspires.ftc.teamcode.constants.IntakeConstants;
 public class IntakeSubsystem extends SubsystemBase {
 
     public enum IntakeState {
-        IDLE,      // Motor detenido
-        INTAKING,  // Motor hacia adentro
-        OUTTAKING  // Motor hacia afuera (expulsar)
+        IDLE,      // Stopped
+        INTAKING,  // Intaking
+        OUTTAKING  // Outtaking
     }
-    
-    // Hardware
+ 
     private final MotorEx intakeMotor;
-
     private IntakeState currentState;
 
     public IntakeSubsystem(HardwareMap hardwareMap) {

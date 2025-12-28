@@ -60,8 +60,6 @@ public class EjectorSubsystem extends SubsystemBase {
     public void setPosition(double position) {
         ejectorServo.set(position);
     }
-
-    // Métodos de consulta
     public EjectorState getState() { return currentState; }
     public boolean isStowed() { return currentState == EjectorState.STOWED; }
     public boolean isEjecting() { return currentState == EjectorState.EJECTING; }

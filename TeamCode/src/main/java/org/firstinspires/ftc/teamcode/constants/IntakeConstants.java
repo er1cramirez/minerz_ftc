@@ -7,8 +7,8 @@ public class IntakeConstants {
     public static final Boolean MOTOR_INVERTED = false;
     
     // Valores de operación
-    public static final double INTAKING_POWER = 0.8;
-    public static final double OUTTAKING_POWER = -0.8;
+    public static final double INTAKING_POWER = 1;
+    public static final double OUTTAKING_POWER = -1;
     public static final double STOPPED_POWER = 0.0;
     
 }
