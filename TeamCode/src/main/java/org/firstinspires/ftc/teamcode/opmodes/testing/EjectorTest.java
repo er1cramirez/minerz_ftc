@@ -6,7 +6,7 @@ import com.seattlesolvers.solverslib.command.CommandOpMode;
 import com.seattlesolvers.solverslib.command.InstantCommand;
 
 import org.firstinspires.ftc.teamcode.subsystems.EjectorSubsystem;
-import org.firstinspires.ftc.teamcode.commands.EjectCycleCommand;
+import org.firstinspires.ftc.teamcode.commands.ejector.EjectCycleCommand;
 import org.firstinspires.ftc.teamcode.constants.EjectorConstants;
 
 /**

@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.opmodes.tuning;
+package org.firstinspires.ftc.teamcode.opmodes.testing;
 
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.seattlesolvers.solverslib.command.CommandOpMode;
@@ -6,12 +6,12 @@ import com.seattlesolvers.solverslib.command.InstantCommand;
 import com.seattlesolvers.solverslib.gamepad.GamepadEx;
 import com.seattlesolvers.solverslib.gamepad.GamepadKeys;
 
-import org.firstinspires.ftc.teamcode.commands.intake.IntakeWithColorDetectionCommand;
+import org.firstinspires.ftc.teamcode.commands.sequences.IntakeAndIndexCommand;
 import org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.SpindexerSubsystem;
 
 /**
- * OpMode para probar IntakeWithColorDetectionCommand.
+ * OpMode para probar IntakeAndIndexCommand.
  * 
  * CONTROLES (Gamepad 2):
  * - RT (mantener): Ejecutar intake con detección automática
@@ -28,7 +28,7 @@ public class IntakeColorDetectionTestOpMode extends CommandOpMode {
     private SpindexerSubsystem spindexer;
     private GamepadEx operatorGamepad;
 
-    private IntakeWithColorDetectionCommand intakeCommand;
+    private IntakeAndIndexCommand intakeCommand;
     private boolean triggerWasPressed = false;
 
     @Override
@@ -86,7 +86,7 @@ public class IntakeColorDetectionTestOpMode extends CommandOpMode {
                 boolean commandFinished = intakeCommand == null || !intakeCommand.isScheduled();
                 
                 if (commandFinished) {
-                    intakeCommand = new IntakeWithColorDetectionCommand(intake, spindexer);
+                    intakeCommand = new IntakeAndIndexCommand(intake, spindexer);
                     schedule(intakeCommand);
                 }
             }
@@ -126,7 +126,7 @@ public class IntakeColorDetectionTestOpMode extends CommandOpMode {
         telemetry.addLine("── SPINDEXER ──");
         telemetry.addData("Slot", "%d | %s", 
             spindexer.getCurrentSlotIndex(),
-            spindexer.isAtIntake() ? "INTAKE" : "OUTTAKE");
+            spindexer.getState().toString());
 
         StringBuilder slots = new StringBuilder("Slots: ");
         for (int i = 0; i < 3; i++) {
