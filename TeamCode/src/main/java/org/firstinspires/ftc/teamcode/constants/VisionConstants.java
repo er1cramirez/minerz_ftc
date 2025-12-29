@@ -11,6 +11,13 @@ public class VisionConstants {
     public static final String CAMERA_NAME = "Camera_1";
 
     /** Offset of the camera with respect to the turret (inches) */
+    // Relative distance between the turret center and the robot center(turret from robot center),
+    // Its suposed that the offset is only in the x direction
+    public static final double D_R_T = -6.0;  // Inches
+    // Relative distance between the camera center and the turret center(camera from turret center),
+    // Its suposed that the offset is only in the x direction
+    public static final double D_T_C = -3.0;  // Inches
+
     public static final double CAMERA_FORWARD_OFFSET_INCHES = 0.0;  // TODO: Calibrate
     public static final double CAMERA_LEFT_OFFSET_INCHES = 0.0;     // TODO: Calibrate
     public static final double CAMERA_UP_OFFSET_INCHES = 6.0;       // TODO: Calibrate
