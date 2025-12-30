@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.opmodes.teleop;
 
 import com.pedropathing.follower.Follower;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.util.ElapsedTime;
 import com.seattlesolvers.solverslib.command.CommandOpMode;
 import com.seattlesolvers.solverslib.command.ConditionalCommand;
 import com.seattlesolvers.solverslib.command.InstantCommand;
@@ -17,6 +18,7 @@ import org.firstinspires.ftc.teamcode.subsystems.DriveSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.DriveSubsystem.DriveMode;
 import org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.SpindexerSubsystem;
+import org.firstinspires.ftc.teamcode.telemetry.TelemetryHelper;
 import org.firstinspires.ftc.teamcode.util.UserGamepadFeedback;
 
 @TeleOp(name = "🔵 Blue Alliance TeleOp", group = "TeleOp")
@@ -29,15 +31,21 @@ public class BlueMainTeleOp extends CommandOpMode {
 
     private IntakeSubsystem intake;
     private SpindexerSubsystem spindex;
-
-
+    
+    // TODO: Add these subsystems when integrated
+    // private TurretSubsystem turret;
+    // private FlywheelSubsystem flywheel;
+    // private EjectorSubsystem ejector;
+    // private VisionSubsystem vision;
 
     //Commands
     private IntakeAndIndexCommand intakeCommand;
 
-
     private GamepadEx driverGamepad;
     private GamepadEx operatorGamepad;
+    
+    // Telemetry
+    private TelemetryHelper telemetryHelper;
 
     @Override
     public void initialize() {
@@ -47,10 +55,20 @@ public class BlueMainTeleOp extends CommandOpMode {
 
         intake = new IntakeSubsystem(hardwareMap);
         spindex = new SpindexerSubsystem(hardwareMap);
+        
+        // TODO: Initialize when integrated
+        // turret = new TurretSubsystem(hardwareMap);
+        // flywheel = new FlywheelSubsystem(hardwareMap);
+        // ejector = new EjectorSubsystem(hardwareMap);
+        // vision = new VisionSubsystem(hardwareMap);
 
         // Initialize Gamepad
         driverGamepad = new GamepadEx(gamepad1);
         operatorGamepad = new GamepadEx(gamepad2);
+        
+        // Initialize Telemetry with HTML mode
+        telemetryHelper = new TelemetryHelper(telemetry);
+        telemetryHelper.setDisplayMode(TelemetryHelper.DisplayMode.HTML);
 
         // Create and set default drive command
         TeleOpDrive driveCommand = new TeleOpDrive(
@@ -61,11 +79,21 @@ public class BlueMainTeleOp extends CommandOpMode {
         );
         drive.setDefaultCommand(driveCommand);
         register(drive, intake, spindex);
+        // TODO: register(turret, flywheel, ejector, vision);
 
         spindex.moveToIntakePosition(0);
         // Configure Bindings
         configureDriverBindings();
         configureOperatorBindings();
+    }
+    
+    @Override
+    public void run() {
+        super.run();
+
+        // Update telemetry
+        updateTelemetry();
+//        telemetry.update();
     }
 
     private void configureDriverBindings() {
@@ -110,8 +138,7 @@ public class BlueMainTeleOp extends CommandOpMode {
                     intakeCommand = new IntakeAndIndexCommand(intake, spindex),
                     new ParallelCommandGroup(
                         new InstantCommand(() -> intakeCommand.cancel()),
-                        new InstantCommand(() -> gamepad2.runRumbleEffect(UserGamepadFeedback.test)),
-                        new InstantCommand(() -> gamepad2.runLedEffect(UserGamepadFeedback.readyToShootLedEff))
+                        new InstantCommand(() -> UserGamepadFeedback.playWarning(gamepad2))
                     ),
                     () -> (spindex.getState() == SpindexerSubsystem.SpindexerState.AT_INTAKE
                             && (intakeCommand == null || !intakeCommand.isScheduled())
@@ -130,4 +157,52 @@ public class BlueMainTeleOp extends CommandOpMode {
                         spindex.moveToIntakePosition((spindex.getCurrentSlotIndex()+1)% 3)
             ));
     }
+    
+    /**
+     * Updates the Driver Station telemetry with robot status.
+     */
+    private void updateTelemetry() {
+        telemetryHelper.begin();
+        
+        // ====== HEADER ======
+        telemetryHelper.addHeader("🔵 BLUE TELEOP MineZ");
+        telemetryHelper.addSpace();
+        
+        // ====== DRIVE SECTION ======
+        telemetryHelper.addSectionHeader("DRIVE", "#00BFFF");
+        telemetryHelper.addBigLine(drive.getCompactStatus());
+        telemetryHelper.addSpace();
+        
+        // ====== INDEXER SECTION ======
+        telemetryHelper.addSectionHeader("INDEXER", "#FFD700");
+        telemetryHelper.addBigLine(spindex.getCompactStatus());
+        // Intake state
+        String intakeIcon = intake.isActive() ? "▶" : (intake.isIdle() ? "⏹" : "◀");
+        telemetryHelper.addLine("   " + intakeIcon + " Intake: " + intake.getState());
+        telemetryHelper.addSpace();
+        
+        // ====== SHOOTER SECTION ======
+        telemetryHelper.addSectionHeader("SHOOTER", "#FF6347");
+        // TODO: Uncomment when Turret is integrated
+        // telemetryHelper.addBigLine(turret.getCompactStatus());
+        telemetryHelper.addLine("🔄 Turret: [NOT INTEGRATED]", "gray");
+        
+        // TODO: Uncomment when Flywheel is integrated
+        // telemetryHelper.addBigLine(flywheel.getCompactStatus());
+        telemetryHelper.addLine("🔥 Flywheel: [NOT INTEGRATED]", "gray");
+        
+        // TODO: Uncomment when Ejector is integrated
+        // telemetryHelper.addLine("📤 Ejector: " + ejector.getState());
+        telemetryHelper.addLine("📤 Ejector: [NOT INTEGRATED]", "gray");
+        telemetryHelper.addSpace();
+        
+        // ====== SYSTEM SECTION ======
+        telemetryHelper.addSectionHeader("SYSTEM", "#808080");
+        // TODO: Get actual voltage from flywheel.getBatteryVoltage() when integrated
+        double voltage = 12.5; // Placeholder
+        telemetryHelper.addSystemLine(voltage);
+        
+        telemetryHelper.end();
+    }
 }
+
