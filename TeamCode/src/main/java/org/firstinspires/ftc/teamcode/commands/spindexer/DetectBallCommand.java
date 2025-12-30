@@ -35,7 +35,7 @@ public class DetectBallCommand extends CommandBase {
 
     public DetectBallCommand(SpindexerSubsystem spindexer) {
         this.spindexer = spindexer;
-        addRequirements(spindexer);
+//        addRequirements(spindexer);
     }
 
     @Override
