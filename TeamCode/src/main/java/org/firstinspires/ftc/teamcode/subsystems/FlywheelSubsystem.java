@@ -25,33 +25,35 @@ public class FlywheelSubsystem extends SubsystemBase {
         SPINNING_UP, // Motor is accelerating to target speed
         AT_SPEED // Motor is at target speed
     }
-    
+
     private final MotorEx motor;
     private final VoltageSensor voltageSensor;
-    
+
     private FlywheelState currentState;
     private double targetRPM;
     private double currentRPM;
 
     private double lastUpdateTimeMs;
-    
+
     private final ElapsedTime stabilityTimer;
     private final ElapsedTime spinupTimer;
     private boolean isStable;
-    
+
     private double currentVoltage;
     private double compensationFactor;
-    
+
     /**
      * FlywheelSubsystem constructor
+     * 
      * @param hardwareMap
      */
     public FlywheelSubsystem(HardwareMap hardwareMap) {
         this(hardwareMap, FlywheelConstants.MOTOR_NAME);
     }
-    
+
     /**
      * FlywheelSubsystem constructor with custom motor name
+     * 
      * @param hardwareMap
      * @param motorName
      */
@@ -61,42 +63,40 @@ public class FlywheelSubsystem extends SubsystemBase {
                 hardwareMap,
                 motorName,
                 (int) FlywheelConstants.ENCODER_PPR,
-                FlywheelConstants.MOTOR_FREE_RPM
-        );
-        
+                FlywheelConstants.MOTOR_FREE_RPM);
+
         // Configure motor
-        motor.setInverted(false);  // Adjust according to mounting
-        motor.setZeroPowerBehavior(Motor.ZeroPowerBehavior.FLOAT);  // Float for flywheel
+        motor.setInverted(false); // Adjust according to mounting
+        motor.setZeroPowerBehavior(Motor.ZeroPowerBehavior.FLOAT); // Float for flywheel
         motor.setRunMode(Motor.RunMode.RawPower);
-        
+
         // Get voltage sensor
         voltageSensor = hardwareMap.voltageSensor.iterator().next();
-        
+
         // Initialize state
         currentState = FlywheelState.IDLE;
         targetRPM = 0;
         currentRPM = 0;
 
-        
         // Initialize timing
         stabilityTimer = new ElapsedTime();
         spinupTimer = new ElapsedTime();
         lastUpdateTimeMs = System.currentTimeMillis();
         isStable = false;
-        
+
         // Initialize telemetry
         currentVoltage = FlywheelConstants.NOMINAL_VOLTAGE;
         compensationFactor = 1.0;
     }
-    
+
     @Override
     public void periodic() {
         // 1. Update velocity reading
         updateVelocityReading();
-        
+
         // 2. Update voltage reading
         updateVoltageReading();
-        
+
         // 3. Execute control based on state
         switch (currentState) {
             case SPINNING_UP:
@@ -111,11 +111,11 @@ public class FlywheelSubsystem extends SubsystemBase {
                 motor.set(0);
                 break;
         }
-        
+
         // 4. Update state
         updateState();
     }
-    
+
     /**
      * Read the current encoder velocity.
      */
@@ -127,7 +127,7 @@ public class FlywheelSubsystem extends SubsystemBase {
         // Update time
         lastUpdateTimeMs = System.currentTimeMillis();
     }
-    
+
     /**
      * Read the current battery voltage.
      */
@@ -142,7 +142,7 @@ public class FlywheelSubsystem extends SubsystemBase {
             compensationFactor = 1.0;
         }
     }
-    
+
     /**
      * Execute velocity control: Feed-Forward + PID + Compensation.
      */
@@ -157,10 +157,10 @@ public class FlywheelSubsystem extends SubsystemBase {
         double compensatedOutput = rawOutput * compensationFactor;
         // 6. Limit output
         double lastTotalOutput = clampOutput(compensatedOutput);
-        // 7. Apply to  motor
+        // 7. Apply to motor
         motor.set(lastTotalOutput);
     }
-    
+
     /**
      * Calculate the Feed-Forward component.
      * FF = kS + kV × targetRPM + kA × aceleración_deseada
@@ -179,10 +179,10 @@ public class FlywheelSubsystem extends SubsystemBase {
             // More boost when further from target
             accelFF = FlywheelConstants.kA * error;
         }
-        
+
         return staticFF + velocityFF + accelFF;
     }
-    
+
     /**
      * Calculate the PID component (primarily P for velocity).
      */
@@ -190,7 +190,7 @@ public class FlywheelSubsystem extends SubsystemBase {
         // Proportional
         return FlywheelConstants.kP * error;
     }
-    
+
     /**
      * Limit output to the allowed range.
      */
@@ -203,9 +203,7 @@ public class FlywheelSubsystem extends SubsystemBase {
         }
         return output;
     }
-    
-   
-    
+
     /**
      * Updates the flywheel state based on current velocity.
      */
@@ -214,13 +212,13 @@ public class FlywheelSubsystem extends SubsystemBase {
             isStable = false;
             return;
         }
-        
+
         double error = Math.abs(targetRPM - currentRPM);
         boolean withinTolerance = error <= FlywheelConstants.RPM_TOLERANCE;
-        
+
         // Determine if it's in idle or firing speed
         boolean isIdleTarget = Math.abs(targetRPM - FlywheelConstants.IDLE_SPIN_RPM) < 100;
-        
+
         if (withinTolerance) {
             // Within tolerance
             if (currentState == FlywheelState.SPINNING_UP) {
@@ -232,20 +230,20 @@ public class FlywheelSubsystem extends SubsystemBase {
                     currentState = FlywheelState.AT_SPEED;
                 }
             }
-            
+
             // Check stability
             isStable = stabilityTimer.milliseconds() >= FlywheelConstants.STABILITY_TIME_MS;
-            
+
         } else {
             // Out of tolerance
             isStable = false;
-            
+
             if (currentState == FlywheelState.AT_SPEED || currentState == FlywheelState.IDLE_SPIN) {
                 // After losing speed, go back to spinning up
                 currentState = FlywheelState.SPINNING_UP;
             }
         }
-        
+
         // Check spin-up timeout
         if (currentState == FlywheelState.SPINNING_UP) {
             if (spinupTimer.milliseconds() > FlywheelConstants.SPINUP_TIMEOUT_MS) {
@@ -254,7 +252,7 @@ public class FlywheelSubsystem extends SubsystemBase {
             }
         }
     }
-    
+
     /**
      * Sets the target RPM for the flywheel.
      * 
@@ -275,7 +273,7 @@ public class FlywheelSubsystem extends SubsystemBase {
             stop();
         }
     }
-    
+
     /**
      * Detiene completamente el flywheel.
      */
@@ -285,57 +283,57 @@ public class FlywheelSubsystem extends SubsystemBase {
         motor.set(0);
         isStable = false;
     }
-    
+
     /**
      * @return Current state of the flywheel
      */
     public FlywheelState getState() {
         return currentState;
     }
-    
+
     /**
      * @return Name of the current state (for telemetry)
      */
     public String getStateName() {
         return currentState.name();
     }
-    
+
     /**
      * @return Current RPM
      */
     public double getCurrentRPM() {
         return currentRPM;
     }
-    
+
     /**
      * @return Target RPM
      */
     public double getTargetRPM() {
         return targetRPM;
     }
-    
+
     /**
      * @return Velocity error (target - current) in RPM
      */
     public double getVelocityError() {
         return targetRPM - currentRPM;
     }
-    
+
     /**
      * @return true if it is at speed
      */
     public boolean isAtSpeed() {
-        return currentState == FlywheelState.AT_SPEED || 
-               currentState == FlywheelState.IDLE_SPIN;
+        return currentState == FlywheelState.AT_SPEED ||
+                currentState == FlywheelState.IDLE_SPIN;
     }
-    
+
     /**
      * @return true if it is at speed and stable
      */
     public boolean isReadyToShoot() {
         return currentState == FlywheelState.AT_SPEED && isStable;
     }
-    
+
     /**
      * @return true if it is idle (motor apagado)
      */
@@ -343,57 +341,54 @@ public class FlywheelSubsystem extends SubsystemBase {
         return currentState == FlywheelState.IDLE;
     }
 
-
     /**
      * Set IDLE_SPIN state
      */
     public void setIdleSpin() {
         currentState = FlywheelState.IDLE_SPIN;
     }
-    
+
     /**
      * @return true if it is idle spinning
      */
     public boolean isIdleSpin() {
         return currentState == FlywheelState.IDLE_SPIN;
     }
-    
+
     /**
      * @return true if it is spinning up
      */
     public boolean isSpinningUp() {
         return currentState == FlywheelState.SPINNING_UP;
     }
-    
+
     /**
      * @return Battery voltage
      */
     public double getBatteryVoltage() {
         return currentVoltage;
     }
-    
+
     /**
      * @return Voltage compensation factor
      */
     public double getVoltageCompensation() {
         return compensationFactor;
     }
-    
+
     /**
      * @return Stability time in milliseconds
      */
     public double getStabilityTimeMs() {
         return isStable ? stabilityTimer.milliseconds() : 0;
     }
-    
+
     /**
      * Returns a compact status string for telemetry.
      * Format: 🔥 2450/2500RPM ✓READY
      */
     public String getCompactStatus() {
-        String readyStr = isReadyToShoot() ? "✓READY" : 
-                         (isSpinningUp() ? "↑SPIN" : 
-                         (isIdleSpin() ? "~IDLE" : "⏹OFF"));
+        String readyStr = isReadyToShoot() ? "✓READY" : (isSpinningUp() ? "↑SPIN" : (isIdleSpin() ? "~IDLE" : "⏹OFF"));
         return String.format("🔥 %.0f/%.0fRPM %s", currentRPM, targetRPM, readyStr);
     }
 }

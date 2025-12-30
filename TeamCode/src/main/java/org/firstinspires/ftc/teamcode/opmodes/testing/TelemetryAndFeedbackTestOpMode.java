@@ -350,7 +350,7 @@ public class TelemetryAndFeedbackTestOpMode extends LinearOpMode {
         // ====== SYSTEM SECTION ======
         helper.addSectionHeader("SYSTEM", "#808080");
         String matchTime = TelemetryHelper.formatTime(runtime.seconds());
-        helper.addSystemLine(matchTime, lastLoopMs, voltage);
+        helper.addSystemLine(voltage);
         
         // Config indicator
         helper.addLine("Format: " + helper.getDisplayMode().name() + 

@@ -284,14 +284,14 @@ public class TelemetryHelper {
     /**
      * Línea de sistema: tiempo, loop time, batería.
      */
-    public void addSystemLine(String matchTime, long loopMs, double voltage) {
-        String line = String.format("%s %s | Loop:%dms | %s%.1fV", 
-                ICON_TIMER, matchTime, loopMs, ICON_BATTERY, voltage);
+    public void addSystemLine(double voltage) {
+        String line = String.format("%s%.1fV",
+                ICON_BATTERY, voltage);
         
         if (currentMode == DisplayMode.HTML) {
             String voltColor = voltage < 11.5 ? "red" : (voltage < 12.0 ? "yellow" : "lime");
-            telemetry.addLine(String.format("%s %s | Loop:%dms | %s<font color='%s'>%.1fV</font>",
-                    ICON_TIMER, matchTime, loopMs, ICON_BATTERY, voltColor, voltage));
+            telemetry.addLine(String.format("%s<font color='%s'>%.1fV</font>",
+                    ICON_BATTERY, voltColor, voltage));
         } else {
             telemetry.addLine(line);
         }
