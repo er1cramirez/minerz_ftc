@@ -11,7 +11,7 @@ import org.firstinspires.ftc.teamcode.constants.SpindexerConstants;
  * 
  * Flow:
  * - Reads distance ONCE
- * - If there is a ball     → runs DetectBallCommand to label
+ * - If there is a ball → runs DetectBallCommand to label
  * - Terminates immediately
  * 
  * The parent command can then consult spindexer.getCurrentSlotState()
@@ -19,7 +19,8 @@ import org.firstinspires.ftc.teamcode.constants.SpindexerConstants;
  */
 public class CheckSlotCommand extends CommandBase {
 
-    // private static final double DISTANCE_BALL_PRESENT = 3.0; // Moved to SpindexerConstants
+    // private static final double DISTANCE_BALL_PRESENT = 3.0; // Moved to
+    // SpindexerConstants
 
     private final SpindexerSubsystem spindexer;
     private boolean checked = false;
@@ -35,15 +36,19 @@ public class CheckSlotCommand extends CommandBase {
 
     @Override
     public void execute() {
-        if (checked) return;
+        if (checked)
+            return;
 
         double distance = spindexer.getDistance();
-        
+
         if (distance < SpindexerConstants.DISTANCE_BALL_PRESENT) {
-            // There is a ball, run detection to label
-            CommandScheduler.getInstance().schedule(new DetectBallCommand(spindexer));
+            // There is a ball. Only mark as UNKNOWN if it was previously considered EMPTY.
+            // If it is already labelled (GREEN/PURPLE) or UNKNOWN, we preserve that state.
+            if (spindexer.getCurrentSlotState() == SpindexerSubsystem.SlotState.EMPTY) {
+                spindexer.setSlotState(spindexer.getCurrentSlotIndex(), SpindexerSubsystem.SlotState.UNKNOWN);
+            }
         }
-        
+
         checked = true;
     }
 
