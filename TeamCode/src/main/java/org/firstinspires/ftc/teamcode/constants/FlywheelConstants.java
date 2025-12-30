@@ -159,14 +159,8 @@ public class FlywheelConstants {
      * @param maxDistance Distancia máxima del rango
      * @return RPM interpolado entre NEAR_ZONE_MIN_RPM y NEAR_ZONE_MAX_RPM
      */
-    public static double interpolateRPMForDistance(double distance, 
-                                                    double minDistance, 
-                                                    double maxDistance) {
-        // Normalizar distancia al rango [0, 1]
-        double t = (distance - minDistance) / (maxDistance - minDistance);
-        t = Math.max(0, Math.min(1, t));  // Clamp
-        
-        // Interpolar linealmente
-        return NEAR_ZONE_MIN_RPM + t * (NEAR_ZONE_MAX_RPM - NEAR_ZONE_MIN_RPM);
+    public static double interpolateRPMForDistance(double distance) {
+        //temporal holder
+        return 2600.0;
     }
 }
