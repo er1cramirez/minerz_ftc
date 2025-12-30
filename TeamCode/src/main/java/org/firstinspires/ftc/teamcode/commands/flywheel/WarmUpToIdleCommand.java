@@ -35,8 +35,8 @@ public class WarmUpToIdleCommand extends SequentialCommandGroup {
                     // Step 3: Full Idle Speed (and wait for stable)
                     new SpinUpCommand(flywheel, FlywheelConstants.IDLE_SPIN_RPM, true)
                 ),
-                new InstantCommand(() -> {}),
-                    flywheel::isIdleSpin
+                    new SpinUpCommand(flywheel, FlywheelConstants.IDLE_SPIN_RPM, true),
+                () -> (flywheel.isIdleSpin() || (flywheel.getCurrentRPM() > FlywheelConstants.IDLE_SPIN_RPM))
             ),
                 new InstantCommand(flywheel::setIdleSpin)
         );
