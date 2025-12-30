@@ -213,6 +213,24 @@ public class SpindexerSubsystem extends SubsystemBase {
             default: return "⚫";
         }
     }
+    
+    /**
+     * Returns a compact status string for telemetry.
+     * Format: [🟢][🟣][⚫] S0 ▸AT_INTAKE
+     */
+    public String getCompactStatus() {
+        StringBuilder sb = new StringBuilder("📥 ");
+        for (int i = 0; i < 3; i++) {
+            if (i == currentSlotIndex) {
+                sb.append("[").append(getSlotEmoji(i)).append("]");
+            } else {
+                sb.append(" ").append(getSlotEmoji(i)).append(" ");
+            }
+        }
+        sb.append(" S").append(currentSlotIndex);
+        sb.append(" ▸").append(currentState.name().replace("AT_", ""));
+        return sb.toString();
+    }
 
     // ==================== PRIVATE HELPERS ====================
 

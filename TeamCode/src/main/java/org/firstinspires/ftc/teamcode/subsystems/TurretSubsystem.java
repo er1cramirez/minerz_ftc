@@ -586,4 +586,35 @@ public class TurretSubsystem extends SubsystemBase {
         return Math.max(-TurretConstants.MAX_POWER,
                 Math.min(TurretConstants.MAX_POWER, power));
     }
+    
+    /**
+     * Returns a compact status string for telemetry.
+     * Format: 🔄 ↻45° 🎯LOCKED
+     */
+    public String getCompactStatus() {
+        String stateIcon;
+        String stateName;
+        switch (visionState) {
+            case LOCKED:
+                stateIcon = "🎯";
+                stateName = "LOCKED";
+                break;
+            case ACQUIRING:
+                stateIcon = "🔵";
+                stateName = "ACQ";
+                break;
+            case SEARCHING:
+                stateIcon = "🔍";
+                stateName = "SEARCH";
+                break;
+            case HOLDING:
+                stateIcon = "⏸";
+                stateName = "HOLD";
+                break;
+            default:
+                stateIcon = "⚫";
+                stateName = currentState.name();
+        }
+        return String.format("🔄 ↻%.0f° %s%s", currentPositionDeg, stateIcon, stateName);
+    }
 }

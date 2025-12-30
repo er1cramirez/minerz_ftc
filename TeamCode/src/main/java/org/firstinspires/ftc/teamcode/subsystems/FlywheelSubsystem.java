@@ -385,4 +385,15 @@ public class FlywheelSubsystem extends SubsystemBase {
     public double getStabilityTimeMs() {
         return isStable ? stabilityTimer.milliseconds() : 0;
     }
+    
+    /**
+     * Returns a compact status string for telemetry.
+     * Format: 🔥 2450/2500RPM ✓READY
+     */
+    public String getCompactStatus() {
+        String readyStr = isReadyToShoot() ? "✓READY" : 
+                         (isSpinningUp() ? "↑SPIN" : 
+                         (isIdleSpin() ? "~IDLE" : "⏹OFF"));
+        return String.format("🔥 %.0f/%.0fRPM %s", currentRPM, targetRPM, readyStr);
+    }
 }

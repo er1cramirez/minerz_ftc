@@ -230,4 +230,16 @@ public class DriveSubsystem extends SubsystemBase {
     public void periodic() {
         follower.update();
     }
+    
+    /**
+     * Returns a compact status string for telemetry.
+     * Format: 🚗 NORMAL | 🧭45° | ⬛ FIELD
+     */
+    public String getCompactStatus() {
+        String centricIcon = robotCentric ? "🤖" : "⬛";
+        String centricText = robotCentric ? "ROBOT" : "FIELD";
+        double heading = Math.toDegrees(follower.getHeading());
+        return String.format("🚗 %s | 🧭%.0f° | %s %s", 
+                currentMode.name(), heading, centricIcon, centricText);
+    }
 }
