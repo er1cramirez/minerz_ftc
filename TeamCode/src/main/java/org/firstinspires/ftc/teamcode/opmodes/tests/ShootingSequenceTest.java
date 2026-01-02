@@ -35,7 +35,7 @@ public class ShootingSequenceTest extends CommandOpMode {
     private EjectorSubsystem ejector;
     private GamepadEx gamepad;
     
-    private ShootingSequence.ShootingStrategy lastStrategy = null;
+    private SpindexerSubsystem.ShootingStrategy lastStrategy = null;
 
     @Override
     public void initialize() {
@@ -56,19 +56,20 @@ public class ShootingSequenceTest extends CommandOpMode {
             
         // X: FASTEST
         gamepad.getGamepadButton(GamepadKeys.Button.X)
-            .whenPressed(new InstantCommand(() -> runSequence(ShootingSequence.ShootingStrategy.FASTEST)));
+                        .whenPressed(new ShootingSequence(spindexer, flywheel, ejector, SpindexerSubsystem.ShootingStrategy.FASTEST));
+//            .whenPressed(new InstantCommand(() -> runSequence(SpindexerSubsystem.ShootingStrategy.FASTEST)));
             
         // Y: GREEN_FIRST
         gamepad.getGamepadButton(GamepadKeys.Button.Y)
-            .whenPressed(new InstantCommand(() -> runSequence(ShootingSequence.ShootingStrategy.GREEN_FIRST)));
+            .whenPressed(new InstantCommand(() -> runSequence(SpindexerSubsystem.ShootingStrategy.GREEN_FIRST)));
             
         // B: GREEN_LAST
         gamepad.getGamepadButton(GamepadKeys.Button.B)
-            .whenPressed(new InstantCommand(() -> runSequence(ShootingSequence.ShootingStrategy.GREEN_LAST)));
+            .whenPressed(new InstantCommand(() -> runSequence(SpindexerSubsystem.ShootingStrategy.GREEN_LAST)));
             
         // DPAD_UP: GREEN_MIDDLE
         gamepad.getGamepadButton(GamepadKeys.Button.DPAD_UP)
-            .whenPressed(new InstantCommand(() -> runSequence(ShootingSequence.ShootingStrategy.GREEN_MIDDLE)));
+            .whenPressed(new InstantCommand(() -> runSequence(SpindexerSubsystem.ShootingStrategy.GREEN_MIDDLE)));
             
         telemetry.addLine("Ready. Press A to Reset.");
         telemetry.update();
@@ -93,7 +94,7 @@ public class ShootingSequenceTest extends CommandOpMode {
         telemetry.update();
     }
     
-    private void runSequence(ShootingSequence.ShootingStrategy strategy) {
+    private void runSequence(SpindexerSubsystem.ShootingStrategy strategy) {
         lastStrategy = strategy;
         schedule(new ShootingSequence(spindexer, flywheel, ejector, strategy));
     }
