@@ -35,7 +35,7 @@ public class DetectBallCommand extends CommandBase {
 
     public DetectBallCommand(SpindexerSubsystem spindexer) {
         this.spindexer = spindexer;
-//        addRequirements(spindexer);
+        // addRequirements(spindexer);
     }
 
     @Override
@@ -51,7 +51,8 @@ public class DetectBallCommand extends CommandBase {
 
     @Override
     public void execute() {
-        if (ballDetected) return;
+        if (ballDetected)
+            return;
 
         double distance = spindexer.getDistance();
         float hue = spindexer.getHue();
@@ -70,7 +71,6 @@ public class DetectBallCommand extends CommandBase {
                 consecutivePurple++;
                 consecutiveGreen = 0;
             } else {
-                consecutiveGreen = 0;
                 consecutivePurple = 0;
             }
 
@@ -80,14 +80,30 @@ public class DetectBallCommand extends CommandBase {
             } else if (consecutivePurple >= READINGS_TO_CONFIRM) {
                 ballDetected = true;
                 detectedColor = SlotState.PURPLE;
-            } else if (timer.milliseconds() > COLOR_TIMEOUT_MS && consecutivePresent >= READINGS_TO_CONFIRM) {
-                ballDetected = true;
-                detectedColor = SlotState.UNKNOWN;
+            } else if (timer.milliseconds() > COLOR_TIMEOUT_MS) {
+                // TIMEOUT LOGIC
+                // We reduce the threshold to 2 to catch "shaky" balls that reset the counter
+                // often,
+                // but we keep it > 0 to avoid "phantom" balls from single-frame noise.
+                if (consecutivePresent >= 2) {
+                    ballDetected = true;
+                    // "Majority Vote" / Best Guess
+                    if (consecutiveGreen > consecutivePurple && consecutiveGreen > 0) {
+                        detectedColor = SlotState.GREEN;
+                    } else if (consecutivePurple > consecutiveGreen && consecutivePurple > 0) {
+                        detectedColor = SlotState.PURPLE;
+                    } else {
+                        detectedColor = SlotState.UNKNOWN;
+                    }
+                }
             }
         } else {
             consecutivePresent = 0;
             consecutiveGreen = 0;
             consecutivePurple = 0;
+
+            // Should accurate detection require seeing nothing for a bit?
+            // Maybe not needed for this fix, but if ball was removed, we reset.
         }
     }
 
@@ -104,10 +120,12 @@ public class DetectBallCommand extends CommandBase {
     }
 
     private SlotState classifyColor(float hue, float sat) {
-        if (hue >= SpindexerConstants.GREEN_HUE_MIN && hue <= SpindexerConstants.GREEN_HUE_MAX && sat >= SpindexerConstants.GREEN_SAT_MIN) {
+        if (hue >= SpindexerConstants.GREEN_HUE_MIN && hue <= SpindexerConstants.GREEN_HUE_MAX
+                && sat >= SpindexerConstants.GREEN_SAT_MIN) {
             return SlotState.GREEN;
         }
-        if (hue >= SpindexerConstants.PURPLE_HUE_MIN && hue <= SpindexerConstants.PURPLE_HUE_MAX && sat >= SpindexerConstants.PURPLE_SAT_MIN) {
+        if (hue >= SpindexerConstants.PURPLE_HUE_MIN && hue <= SpindexerConstants.PURPLE_HUE_MAX
+                && sat >= SpindexerConstants.PURPLE_SAT_MIN) {
             return SlotState.PURPLE;
         }
         return SlotState.UNKNOWN;

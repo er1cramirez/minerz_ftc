@@ -1,7 +1,11 @@
 package org.firstinspires.ftc.teamcode.commands.sequences;
 
+import com.seattlesolvers.solverslib.command.Command;
+import com.seattlesolvers.solverslib.command.CommandBase;
+import com.seattlesolvers.solverslib.command.CommandGroupBase;
 import com.seattlesolvers.solverslib.command.ConditionalCommand;
 import com.seattlesolvers.solverslib.command.InstantCommand;
+import com.seattlesolvers.solverslib.command.ParallelCommandGroup;
 import com.seattlesolvers.solverslib.command.SequentialCommandGroup;
 import com.seattlesolvers.solverslib.command.WaitCommand;
 
@@ -10,6 +14,7 @@ import org.firstinspires.ftc.teamcode.commands.spindexer.DetectBallCommand;
 import org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.SpindexerSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.SpindexerSubsystem.SlotState;
+import org.firstinspires.ftc.teamcode.util.UserGamepadFeedback;
 
 /**
  * Command that executes a complete intake sequence with labeling.
@@ -27,7 +32,7 @@ import org.firstinspires.ftc.teamcode.subsystems.SpindexerSubsystem.SlotState;
  */
 public class IntakeAndIndexCommand extends SequentialCommandGroup {
 
-    private static final long SPINDEXER_MOVE_TIME_MS = 500;
+    private static final long SPINDEXER_MOVE_TIME_MS = 650;
 
     public IntakeAndIndexCommand(IntakeSubsystem intake, SpindexerSubsystem spindexer) {
         addCommands(
@@ -53,16 +58,14 @@ public class IntakeAndIndexCommand extends SequentialCommandGroup {
                         () -> spindexer.getCurrentSlotState() == SlotState.EMPTY),
 
                 // 3. Move to the next empty slot
-                new InstantCommand(() -> {
-                    int nextEmpty = spindexer.getNextEmptySlot();
-                    if (nextEmpty != -1) {
-                        spindexer.moveToIntakePosition(nextEmpty);
-                    }
-                }),
-
-                // 4. Wait for the servo to reach
-                new WaitCommand(SPINDEXER_MOVE_TIME_MS));
-
+                new ConditionalCommand(
+                        new ParallelCommandGroup(
+                                new WaitCommand((long) (0.75 * spindexer.calculateTransitionTime(
+                                        spindexer.getCurrentSlotIndex(), spindexer.getNextEmptySlot()))),
+                                new InstantCommand(
+                                        () -> spindexer.moveToIntakePosition(spindexer.getNextEmptySlot()))),
+                        new InstantCommand(),
+                        () -> spindexer.getNextEmptySlot() != -1));
         addRequirements(intake, spindexer);
     }
 }
