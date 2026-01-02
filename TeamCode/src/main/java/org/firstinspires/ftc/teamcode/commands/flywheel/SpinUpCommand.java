@@ -32,7 +32,7 @@ public class SpinUpCommand extends CommandBase {
      * @param targetRPM The target RPM
      */
     public SpinUpCommand(FlywheelSubsystem flywheel, double targetRPM) {
-        this(flywheel, targetRPM, true);
+        this(flywheel, targetRPM, false);
     }
     
     /**

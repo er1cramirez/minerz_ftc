@@ -19,41 +19,39 @@ import org.firstinspires.ftc.teamcode.subsystems.FlywheelSubsystem;
  */
 public class WarmUpToIdleCommand extends SequentialCommandGroup {
     FlywheelSubsystem flywheel;
+
     public WarmUpToIdleCommand(FlywheelSubsystem flywheel) {
         this.flywheel = flywheel;
         addCommands(
-            new ConditionalCommand(
-                new SequentialCommandGroup(
-                    // Step 1: 30% speed
-                    new SpinUpCommand(flywheel, FlywheelConstants.IDLE_SPIN_RPM * 0.3, false),
-                    new WaitCommand(300),
-                    
-                    // Step 2: 60% speed
-                    new SpinUpCommand(flywheel, FlywheelConstants.IDLE_SPIN_RPM * 0.6, false),
-                    new WaitCommand(200),
-                    
-                    // Step 3: Full Idle Speed (and wait for stable)
-                    new SpinUpCommand(flywheel, FlywheelConstants.IDLE_SPIN_RPM, true)
-                ),
-                    new SpinUpCommand(flywheel, FlywheelConstants.IDLE_SPIN_RPM, true),
-                () -> (flywheel.isIdleSpin() || (flywheel.getCurrentRPM() > FlywheelConstants.IDLE_SPIN_RPM))
-            ),
-                new InstantCommand(flywheel::setIdleSpin)
-        );
-        
+                new ConditionalCommand(
+                        new SequentialCommandGroup(
+                                // Step 1: 30% speed
+                                new SpinUpCommand(flywheel, FlywheelConstants.IDLE_SPIN_RPM * 0.4, false),
+                                new WaitCommand(500),
+                                new SpinUpCommand(flywheel, FlywheelConstants.IDLE_SPIN_RPM * 0.5, false),
+                                new WaitCommand(100),
+                                new SpinUpCommand(flywheel, FlywheelConstants.IDLE_SPIN_RPM * 0.6, false),
+                                new WaitCommand(100),
+                                new SpinUpCommand(flywheel, FlywheelConstants.IDLE_SPIN_RPM * 0.7, false),
+                                new WaitCommand(100),
+                                new SpinUpCommand(flywheel, FlywheelConstants.IDLE_SPIN_RPM, false),
+                                new InstantCommand(flywheel::setIdleSpin)),
+                        new InstantCommand(flywheel::setIdleSpin),
+                        () -> !flywheel.isIdleSpin()));
+
         addRequirements(flywheel);
     }
 
-//    @Override
-//    public void end(boolean interrupted) {
-//        if (!interrupted) {
-//            flywheel.setIdleSpin();
-//        }
-//    }
+    // @Override
+    // public void end(boolean interrupted) {
+    // if (!interrupted) {
+    // flywheel.setIdleSpin();
+    // }
+    // }
 
-// Not necessary since SpinUpCommand handles it
-//    @Override
-//    public boolean isFinished() {
-//        return flywheel.isAtSpeed();
-//    }
+    // Not necessary since SpinUpCommand handles it
+    // @Override
+    // public boolean isFinished() {
+    // return flywheel.isAtSpeed();
+    // }
 }
