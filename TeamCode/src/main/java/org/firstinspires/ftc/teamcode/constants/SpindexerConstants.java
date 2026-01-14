@@ -17,14 +17,15 @@ public class SpindexerConstants {
     public static final double DISTANCE_BALL_PRESENT = 3.0; // cm
 
     // GREEN
-    public static final float GREEN_HUE_MIN = 71f;
-    public static final float GREEN_HUE_MAX = 190f;
-    public static final float GREEN_SAT_MIN = 0.43f;
+    public static final float GREEN_HUE_MIN = 119f;
+    public static final float GREEN_HUE_MAX = 212f;
+    public static final float GREEN_SAT_MIN = 0.49f;
+
 
     // PURPLE
-    public static final float PURPLE_HUE_MIN = 123f;
-    public static final float PURPLE_HUE_MAX = 263f;
-    public static final float PURPLE_SAT_MIN = 0.31f;
+    public static final float PURPLE_HUE_MIN = 194f;
+    public static final float PURPLE_HUE_MAX = 295f;
+    public static final float PURPLE_SAT_MIN = 0.28f;
 
     // ==================== POSICIONES DEL SERVO ====================
 
