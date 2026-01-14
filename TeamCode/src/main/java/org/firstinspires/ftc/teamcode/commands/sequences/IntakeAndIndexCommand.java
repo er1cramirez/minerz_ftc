@@ -32,40 +32,43 @@ import org.firstinspires.ftc.teamcode.util.UserGamepadFeedback;
  */
 public class IntakeAndIndexCommand extends SequentialCommandGroup {
 
-    private static final long SPINDEXER_MOVE_TIME_MS = 650;
+        private static final long SPINDEXER_MOVE_TIME_MS = 750;
 
-    public IntakeAndIndexCommand(IntakeSubsystem intake, SpindexerSubsystem spindexer) {
-        addCommands(
-                // 1. CheckSlotCommand → Verifies if there is a ball, if there is the label
-                new CheckSlotCommand(spindexer),
-                // 2. ConditionalCommand: Handle 3 states (EMPTY, UNKNOWN, KNOWN)
-                new ConditionalCommand(
-                        // Case A: Slot is EMPTY → Run Intake Sequence
-                        new SequentialCommandGroup(
-                                new InstantCommand(intake::intake, intake),
-                                new DetectBallCommand(spindexer),
-                                new InstantCommand(intake::stop, intake)),
-                        // Case B: Slot is NOT EMPTY (Could be UNKNOWN or ALREADY KNOWN)
-                        new ConditionalCommand(
-                                // Case B.1: State is UNKNOWN (Ball found by CheckSlot) → Run Detection only
-                                new DetectBallCommand(spindexer),
-                                // Case B.2: State is KNOWN (Green/Purple) → Do Nothing
+        public IntakeAndIndexCommand(IntakeSubsystem intake, SpindexerSubsystem spindexer) {
+                addCommands(
+                                // 1. CheckSlotCommand → Verifies if there is a ball, if there is the label
+                                new CheckSlotCommand(spindexer),
+                                // 2. ConditionalCommand: Handle 3 states (EMPTY, UNKNOWN, KNOWN)
+                                new ConditionalCommand(
+                                                // Case A: Slot is EMPTY → Run Intake Sequence
+                                                new SequentialCommandGroup(
+                                                                new InstantCommand(intake::intake, intake),
+                                                                new DetectBallCommand(spindexer),
+                                                                new InstantCommand(intake::stop, intake)),
+                                                // Case B: Slot is NOT EMPTY (Could be UNKNOWN or ALREADY KNOWN)
+                                                new ConditionalCommand(
+                                                                // Case B.1: State is UNKNOWN (Ball found by CheckSlot)
+                                                                // → Run Detection only
+                                                                new DetectBallCommand(spindexer),
+                                                                // Case B.2: State is KNOWN (Green/Purple) → Do Nothing
+                                                                new InstantCommand(() -> {
+                                                                }),
+                                                                // Condition for B
+                                                                () -> spindexer.getCurrentSlotState() == SlotState.UNKNOWN),
+                                                // Condition for A: Is it empty?
+                                                () -> spindexer.getCurrentSlotState() == SlotState.EMPTY),
+
+                                // 3. Move to the next empty slot
                                 new InstantCommand(() -> {
+                                        int nextEmpty = spindexer.getNextEmptySlot();
+                                        if (nextEmpty != -1) {
+                                                spindexer.moveToIntakePosition(nextEmpty);
+                                        }
                                 }),
-                                // Condition for B
-                                () -> spindexer.getCurrentSlotState() == SlotState.UNKNOWN),
-                        // Condition for A: Is it empty?
-                        () -> spindexer.getCurrentSlotState() == SlotState.EMPTY),
 
-                // 3. Move to the next empty slot
-                new ConditionalCommand(
-                        new ParallelCommandGroup(
-                                new WaitCommand((long) (0.75 * spindexer.calculateTransitionTime(
-                                        spindexer.getCurrentSlotIndex(), spindexer.getNextEmptySlot()))),
-                                new InstantCommand(
-                                        () -> spindexer.moveToIntakePosition(spindexer.getNextEmptySlot()))),
-                        new InstantCommand(),
-                        () -> spindexer.getNextEmptySlot() != -1));
-        addRequirements(intake, spindexer);
-    }
+                                // 4. Wait for the servo to reach
+                                new WaitCommand(SPINDEXER_MOVE_TIME_MS));
+
+                addRequirements(intake, spindexer);
+        }
 }
