@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.commands.sequences;
 
+import com.seattlesolvers.solverslib.command.ConditionalCommand;
 import com.seattlesolvers.solverslib.command.InstantCommand;
 import com.seattlesolvers.solverslib.command.SequentialCommandGroup;
 import com.seattlesolvers.solverslib.command.WaitCommand;
@@ -12,15 +13,14 @@ import org.firstinspires.ftc.teamcode.subsystems.SpindexerSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.SpindexerSubsystem.ShootingStrategy;
 
 /**
- * Fixed 3-shot shooting sequence.
+ * Adaptive shooting sequence that handles 1-3 balls.
  * 
  * Architecture:
  * - First InstantCommand calls prepareShotPlan() to capture current state
- * - Each shot step reads from subsystem's stored plan
- * - Explicit 3-shot structure (no dynamic loops)
+ * - Each shot is wrapped in ConditionalCommand to skip if no valid ball
+ * - Handles partial loads gracefully without crashes
  * 
- * Designed for full spindexer (3 balls). For partial shots, use manual
- * controls.
+ * Works with any number of balls (1, 2, or 3).
  */
 public class ShootingSequence extends SequentialCommandGroup {
 
@@ -31,26 +31,45 @@ public class ShootingSequence extends SequentialCommandGroup {
                 // Step 0: Prepare the shooting plan (captures current slot states)
                 new InstantCommand(() -> spindexer.prepareShotPlan(strategy)),
 
-                // ===== SHOT 1 =====
-                new InstantCommand(() -> spindexer.moveToOuttakePosition(spindexer.getShotSlot(0))),
-                new WaitCommand(spindexer.getShotDelay(0)),
-                new WaitUntilCommand(flywheel::isReadyToShoot),
-                new EjectCycleCommand(ejector),
-                new InstantCommand(spindexer::clearCurrentShotAndAdvance),
+                // ===== SHOT 1 (index 0) =====
+                new ConditionalCommand(
+                        new SequentialCommandGroup(
+                                new InstantCommand(() -> spindexer.moveToOuttakePosition(spindexer.getShotSlot(0))),
+                                new WaitCommand(spindexer.getShotDelay(0)),
+                                new WaitUntilCommand(flywheel::isReadyToShoot),
+                                new EjectCycleCommand(ejector),
+                                new InstantCommand(spindexer::clearCurrentShotAndAdvance)
+                        ),
+                        new InstantCommand(), // Do nothing if no valid shot
+                        () -> spindexer.isValidShotIndex(0)
+                ),
 
-                // ===== SHOT 2 =====
-                new InstantCommand(() -> spindexer.moveToOuttakePosition(spindexer.getShotSlot(1))),
-                new WaitCommand(spindexer.getShotDelay(1)),
-                new WaitUntilCommand(flywheel::isReadyToShoot),
-                new EjectCycleCommand(ejector),
-                new InstantCommand(spindexer::clearCurrentShotAndAdvance),
+                // ===== SHOT 2 (index 1) =====
+                new ConditionalCommand(
+                        new SequentialCommandGroup(
+                                new InstantCommand(() -> spindexer.moveToOuttakePosition(spindexer.getShotSlot(1))),
+                                new WaitCommand(spindexer.getShotDelay(1)),
+                                new WaitUntilCommand(flywheel::isReadyToShoot),
+                                new EjectCycleCommand(ejector),
+                                new InstantCommand(spindexer::clearCurrentShotAndAdvance)
+                        ),
+                        new InstantCommand(), // Do nothing if no valid shot
+                        () -> spindexer.isValidShotIndex(1)
+                ),
 
-                // ===== SHOT 3 =====
-                new InstantCommand(() -> spindexer.moveToOuttakePosition(spindexer.getShotSlot(2))),
-                new WaitCommand(spindexer.getShotDelay(2)),
-                new WaitUntilCommand(flywheel::isReadyToShoot),
-                new EjectCycleCommand(ejector),
-                new InstantCommand(spindexer::clearCurrentShotAndAdvance));
+                // ===== SHOT 3 (index 2) =====
+                new ConditionalCommand(
+                        new SequentialCommandGroup(
+                                new InstantCommand(() -> spindexer.moveToOuttakePosition(spindexer.getShotSlot(2))),
+                                new WaitCommand(spindexer.getShotDelay(2)),
+                                new WaitUntilCommand(flywheel::isReadyToShoot),
+                                new EjectCycleCommand(ejector),
+                                new InstantCommand(spindexer::clearCurrentShotAndAdvance)
+                        ),
+                        new InstantCommand(), // Do nothing if no valid shot
+                        () -> spindexer.isValidShotIndex(2)
+                )
+        );
 
         addRequirements(spindexer, ejector);
     }

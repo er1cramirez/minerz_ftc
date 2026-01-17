@@ -76,11 +76,14 @@ public class SpindexerSubsystem extends SubsystemBase {
 
     /**
      * Moves the specified slot to the intake position.
+     * Silently ignores invalid slot indices to prevent crashes.
      * 
      * @param slotIndex 0-2
      */
     public void moveToIntakePosition(int slotIndex) {
-        validateSlotIndex(slotIndex);
+        if (!isValidSlotIndex(slotIndex)) {
+            return; // Silently ignore invalid indices
+        }
         // Reset direction to standard for predictable absolute positioning
         // Unless user logic confirms 'wrapping' works via direction filp
         indexerServo.setDirection(Servo.Direction.FORWARD);
@@ -92,11 +95,14 @@ public class SpindexerSubsystem extends SubsystemBase {
 
     /**
      * Moves the specified slot to the outtake position.
+     * Silently ignores invalid slot indices to prevent crashes.
      * 
      * @param slotIndex 0-2
      */
     public void moveToOuttakePosition(int slotIndex) {
-        validateSlotIndex(slotIndex);
+        if (!isValidSlotIndex(slotIndex)) {
+            return; // Silently ignore invalid indices
+        }
         indexerServo.setDirection(Servo.Direction.FORWARD);
         indexerServo.setPosition(getOuttakePosition(slotIndex));
 
@@ -123,7 +129,9 @@ public class SpindexerSubsystem extends SubsystemBase {
     }
 
     public SlotState getSlotState(int slotIndex) {
-        validateSlotIndex(slotIndex);
+        if (!isValidSlotIndex(slotIndex)) {
+            return SlotState.EMPTY; // Safe default for invalid indices
+        }
         return slotStates[slotIndex];
     }
 
@@ -132,7 +140,9 @@ public class SpindexerSubsystem extends SubsystemBase {
     }
 
     public void setSlotState(int slotIndex, SlotState state) {
-        validateSlotIndex(slotIndex);
+        if (!isValidSlotIndex(slotIndex)) {
+            return; // Silently ignore invalid indices
+        }
         slotStates[slotIndex] = state;
     }
 
@@ -220,11 +230,23 @@ public class SpindexerSubsystem extends SubsystemBase {
 
     /**
      * Gets the slot index for a specific shot number (0, 1, or 2).
+     * @return Slot index (0-2) or -1 if shot number is invalid
      */
     public int getShotSlot(int shotNumber) {
         if (shotNumber < 0 || shotNumber >= totalShots)
             return -1;
         return shootingPlan[shotNumber];
+    }
+
+    /**
+     * Checks if the specified shot number is valid in the current plan.
+     * Use this to conditionally execute shots in ShootingSequence.
+     * 
+     * @param shotNumber The shot number to check (0, 1, or 2)
+     * @return true if the shot is valid and should be executed
+     */
+    public boolean isValidShotIndex(int shotNumber) {
+        return shotNumber >= 0 && shotNumber < totalShots;
     }
 
     /**
@@ -461,10 +483,13 @@ public class SpindexerSubsystem extends SubsystemBase {
         }
     }
 
-    private void validateSlotIndex(int slotIndex) {
-        if (slotIndex < 0 || slotIndex > 2) {
-            throw new IllegalArgumentException("Slot index must be 0, 1, or 2");
-        }
+    /**
+     * Checks if a slot index is valid (0, 1, or 2).
+     * @param slotIndex The index to validate
+     * @return true if valid, false otherwise
+     */
+    private boolean isValidSlotIndex(int slotIndex) {
+        return slotIndex >= 0 && slotIndex <= 2;
     }
 
     public double getServoPos () {
