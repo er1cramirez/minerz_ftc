@@ -342,11 +342,11 @@ public class SpindexerMotorTuning extends OpMode {
             homeOffsetTicks = motor.getCurrentPosition() - degreesToTicks(offsetDeg);
             currentAngleDeg = offsetDeg;
             lastError = 0;
-            telemetry.log().add("HOME [%s] - reseteado (error era %.1f°, offset=%.1f°)", 
-                source, assumedError, offsetDeg);
+            telemetry.log().add(String.format("HOME [%s] - reseteado (error era %.1f°, offset=%.1f°)", 
+                source, assumedError, offsetDeg));
         } else {
-            telemetry.log().add("HOME [%s] verificado - sin cambios (error %.1f°)", 
-                source, assumedError);
+            telemetry.log().add(String.format("HOME [%s] verificado - sin cambios (error %.1f°)", 
+                source, assumedError));
         }
         
         isHomed = true;
