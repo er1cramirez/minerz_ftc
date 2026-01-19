@@ -176,7 +176,7 @@ public class SpindexerMotorTuning extends OpMode {
     public void init_loop() {
         updateSensorCache();
         
-        telemetry.addData("Encoder", "%.1f ticks (%.1f°)", 
+        telemetry.addData("Encoder", "%d ticks (%.1f°)", 
             motor.getCurrentPosition(), currentAngleDeg);
         telemetry.addData("Limit Switch", limitSwitch.isPressed() ? "✓ ACTIVO" : "○ Inactivo");
         telemetry.addLine();
