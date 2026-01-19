@@ -193,12 +193,10 @@ public class SpindexerMotorTuning extends OpMode {
             // Already at home position
             setCurrentPositionAsHome();
             isHomed = true;
-            telemetry.log().add("Iniciado en HOME - encoder reseteado");
         } else {
             // Not at home, but encoder starts at 0
             // We'll consider this as "approximately homed" until user runs homing
             isHomed = false;
-            telemetry.log().add("Iniciado fuera de HOME - ejecutar Y para homing");
         }
         
         currentState = State.IDLE;
@@ -299,7 +297,6 @@ public class SpindexerMotorTuning extends OpMode {
         } else if (homingTimer.milliseconds() > HOMING_TIMEOUT_MS) {
             // Timeout
             motor.setPower(0);
-            telemetry.log().add("HOMING TIMEOUT - no se encontró el switch");
             currentState = State.IDLE;
             homingComplete = false;
         } else {
@@ -342,11 +339,6 @@ public class SpindexerMotorTuning extends OpMode {
             homeOffsetTicks = motor.getCurrentPosition() - degreesToTicks(offsetDeg);
             currentAngleDeg = offsetDeg;
             lastError = 0;
-            telemetry.log().add(String.format("HOME [%s] - reseteado (error era %.1f°, offset=%.1f°)", 
-                source, assumedError, offsetDeg));
-        } else {
-            telemetry.log().add(String.format("HOME [%s] verificado - sin cambios (error %.1f°)", 
-                source, assumedError));
         }
         
         isHomed = true;
@@ -387,7 +379,6 @@ public class SpindexerMotorTuning extends OpMode {
         currentState = State.HOMING;
         homingTimer.reset();
         homingComplete = false;
-        telemetry.log().add("Iniciando HOMING...");
     }
 
     // ==================== GAMEPAD HANDLERS ====================
@@ -456,7 +447,6 @@ public class SpindexerMotorTuning extends OpMode {
         if (gamepad1.left_bumper && !lastLB) {
             setCurrentPositionAsHome();
             isHomed = true;
-            telemetry.log().add("HOME establecido manualmente");
         }
         lastLB = gamepad1.left_bumper;
 
@@ -500,7 +490,6 @@ public class SpindexerMotorTuning extends OpMode {
         // A -> Toggle wrapping
         if (gamepad2.a && !lastG2A) {
             wrappingEnabled = !wrappingEnabled;
-            telemetry.log().add("Wrapping: " + (wrappingEnabled ? "ON" : "OFF"));
         }
         lastG2A = gamepad2.a;
 
@@ -508,7 +497,6 @@ public class SpindexerMotorTuning extends OpMode {
         if (gamepad2.y && !lastG2Y) {
             kP = DEFAULT_KP;
             kD = DEFAULT_KD;
-            telemetry.log().add("PID reseteado a defaults");
         }
         lastG2Y = gamepad2.y;
 
@@ -519,7 +507,6 @@ public class SpindexerMotorTuning extends OpMode {
             System.out.println("public static double kD = " + kD + ";");
             System.out.println("Wrapping: " + wrappingEnabled);
             System.out.println("================================");
-            telemetry.log().add("Valores impresos a Logcat");
         }
         lastG2LB = gamepad2.left_bumper;
     }
