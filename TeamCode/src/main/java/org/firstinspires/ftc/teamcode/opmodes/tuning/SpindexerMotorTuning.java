@@ -61,8 +61,8 @@ public class SpindexerMotorTuning extends OpMode {
     private static final double SLOT_2_DEG = 240.0;
 
     // ==================== PD CONTROL (tunable) ====================
-    private static double kP = 0.025;
-    private static double kD = 0.003;
+    private static double kP = 0.005;
+    private static double kD = 0.00;
     private static final double MAX_POWER = 0.8;
 
     // ==================== TOLERANCES ====================
@@ -363,8 +363,8 @@ public class SpindexerMotorTuning extends OpMode {
 
     private void setCurrentPositionAsHome() {
         homeOffsetTicks = motor.getCurrentPosition();
-        currentAngleDeg = HOME_OFFSET_DEG;
-        targetAngleDeg = HOME_OFFSET_DEG;
+        currentAngleDeg = 0;
+        targetAngleDeg = 0;
         lastError = 0;
     }
 

@@ -424,7 +424,6 @@ public class SpindexerSubsystem extends SubsystemBase {
     // ==================== TELEMETRY HELPERS ====================
 
     public String getSlotEmoji(int slotIndex) {
-        validateSlotIndex(slotIndex);
         switch (slotStates[slotIndex]) {
             case GREEN:
                 return "🟢";
