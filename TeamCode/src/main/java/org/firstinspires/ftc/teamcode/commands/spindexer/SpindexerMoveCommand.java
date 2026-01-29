@@ -1,28 +1,41 @@
 package org.firstinspires.ftc.teamcode.commands.spindexer;
 
-import com.seattlesolvers.solverslib.command.InstantCommand;
+import com.seattlesolvers.solverslib.command.CommandBase;
 import org.firstinspires.ftc.teamcode.subsystems.SpindexerSubsystem;
 
 /**
- * Basic command to move the Spindexer to a specific slot and position (Intake/Outtake).
- * Uses InstantCommand because servo movement is effectively instantaneous from the code's perspective
- * (we don't wait for it to arrive, though we could add a wait if precise timing is needed).
+ * Command to move the Spindexer to a specific slot and position.
+ * Now waits for motor to reach position before finishing.
  */
-public class SpindexerMoveCommand extends InstantCommand {
+public class SpindexerMoveCommand extends CommandBase {
 
     public enum Position {
         INTAKE,
         OUTTAKE
     }
 
+    private final SpindexerSubsystem spindexer;
+    private final int slotIndex;
+    private final Position position;
+
     public SpindexerMoveCommand(SpindexerSubsystem spindexer, int slotIndex, Position position) {
-        super(() -> {
-            if (position == Position.INTAKE) {
-                spindexer.moveToIntakePosition(slotIndex);
-            } else {
-                spindexer.moveToOuttakePosition(slotIndex);
-            }
-        });
+        this.spindexer = spindexer;
+        this.slotIndex = slotIndex;
+        this.position = position;
         addRequirements(spindexer);
+    }
+
+    @Override
+    public void initialize() {
+        if (position == Position.INTAKE) {
+            spindexer.moveToIntakePosition(slotIndex);
+        } else {
+            spindexer.moveToOuttakePosition(slotIndex);
+        }
+    }
+
+    @Override
+    public boolean isFinished() {
+        return spindexer.isAtPosition();
     }
 }

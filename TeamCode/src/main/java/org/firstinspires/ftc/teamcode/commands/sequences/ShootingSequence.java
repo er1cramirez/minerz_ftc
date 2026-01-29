@@ -3,7 +3,6 @@ package org.firstinspires.ftc.teamcode.commands.sequences;
 import com.seattlesolvers.solverslib.command.ConditionalCommand;
 import com.seattlesolvers.solverslib.command.InstantCommand;
 import com.seattlesolvers.solverslib.command.SequentialCommandGroup;
-import com.seattlesolvers.solverslib.command.WaitCommand;
 import com.seattlesolvers.solverslib.command.WaitUntilCommand;
 
 import org.firstinspires.ftc.teamcode.commands.ejector.EjectCycleCommand;
@@ -18,6 +17,7 @@ import org.firstinspires.ftc.teamcode.subsystems.SpindexerSubsystem.ShootingStra
  * Architecture:
  * - First InstantCommand calls prepareShotPlan() to capture current state
  * - Each shot is wrapped in ConditionalCommand to skip if no valid ball
+ * - Uses position feedback (isAtPosition) instead of fixed delays
  * - Handles partial loads gracefully without crashes
  * 
  * Works with any number of balls (1, 2, or 3).
@@ -35,7 +35,7 @@ public class ShootingSequence extends SequentialCommandGroup {
                 new ConditionalCommand(
                         new SequentialCommandGroup(
                                 new InstantCommand(() -> spindexer.moveToOuttakePosition(spindexer.getShotSlot(0))),
-                                new WaitCommand(spindexer.getShotDelay(0)),
+                                new WaitUntilCommand(spindexer::isAtPosition),
                                 new WaitUntilCommand(flywheel::isReadyToShoot),
                                 new EjectCycleCommand(ejector),
                                 new InstantCommand(spindexer::clearCurrentShotAndAdvance)
@@ -48,7 +48,7 @@ public class ShootingSequence extends SequentialCommandGroup {
                 new ConditionalCommand(
                         new SequentialCommandGroup(
                                 new InstantCommand(() -> spindexer.moveToOuttakePosition(spindexer.getShotSlot(1))),
-                                new WaitCommand(spindexer.getShotDelay(1)),
+                                new WaitUntilCommand(spindexer::isAtPosition),
                                 new WaitUntilCommand(flywheel::isReadyToShoot),
                                 new EjectCycleCommand(ejector),
                                 new InstantCommand(spindexer::clearCurrentShotAndAdvance)
@@ -61,7 +61,7 @@ public class ShootingSequence extends SequentialCommandGroup {
                 new ConditionalCommand(
                         new SequentialCommandGroup(
                                 new InstantCommand(() -> spindexer.moveToOuttakePosition(spindexer.getShotSlot(2))),
-                                new WaitCommand(spindexer.getShotDelay(2)),
+                                new WaitUntilCommand(spindexer::isAtPosition),
                                 new WaitUntilCommand(flywheel::isReadyToShoot),
                                 new EjectCycleCommand(ejector),
                                 new InstantCommand(spindexer::clearCurrentShotAndAdvance)

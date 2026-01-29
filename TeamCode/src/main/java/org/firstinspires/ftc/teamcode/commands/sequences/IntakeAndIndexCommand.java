@@ -7,7 +7,7 @@ import com.seattlesolvers.solverslib.command.ConditionalCommand;
 import com.seattlesolvers.solverslib.command.InstantCommand;
 import com.seattlesolvers.solverslib.command.ParallelCommandGroup;
 import com.seattlesolvers.solverslib.command.SequentialCommandGroup;
-import com.seattlesolvers.solverslib.command.WaitCommand;
+import com.seattlesolvers.solverslib.command.WaitUntilCommand;
 
 import org.firstinspires.ftc.teamcode.commands.spindexer.CheckSlotCommand;
 import org.firstinspires.ftc.teamcode.commands.spindexer.DetectBallCommand;
@@ -28,11 +28,9 @@ import org.firstinspires.ftc.teamcode.util.UserGamepadFeedback;
  * │ c. intake.stop()
  * └─ NO EMPTY → nothing (already labeled by CheckSlot)
  * 3. Move to the next empty slot
- * 4. Wait 500ms for the servo to reach
+ * 4. Wait for motor to reach position
  */
 public class IntakeAndIndexCommand extends SequentialCommandGroup {
-
-        private static final long SPINDEXER_MOVE_TIME_MS = 750;
 
         public IntakeAndIndexCommand(IntakeSubsystem intake, SpindexerSubsystem spindexer) {
                 addCommands(
@@ -66,8 +64,8 @@ public class IntakeAndIndexCommand extends SequentialCommandGroup {
                                         }
                                 }),
 
-                                // 4. Wait for the servo to reach
-                                new WaitCommand(SPINDEXER_MOVE_TIME_MS));
+                                // 4. Wait for motor to reach position (replaces fixed delay)
+                                new WaitUntilCommand(spindexer::isAtPosition));
 
                 addRequirements(intake, spindexer);
         }
