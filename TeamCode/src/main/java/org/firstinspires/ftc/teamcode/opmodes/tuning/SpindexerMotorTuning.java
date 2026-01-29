@@ -98,7 +98,8 @@ public class SpindexerMotorTuning extends OpMode {
         IDLE,
         MANUAL,
         POSITION_CONTROL,
-        HOMING
+        HOMING,
+        CALIBRATING  // Modo calibración de offset
     }
     private State currentState = State.IDLE;
     private boolean isHomed = false;
@@ -144,6 +145,14 @@ public class SpindexerMotorTuning extends OpMode {
     private static final double KD_INCREMENT = 0.001;
     private static final double DEFAULT_KP = 0.025;
     private static final double DEFAULT_KD = 0.003;
+    private static final double OFFSET_INCREMENT_COARSE = 1.0;  // ±1°
+    private static final double OFFSET_INCREMENT_FINE = 0.5;    // ±0.5°
+    
+    // ==================== CALIBRATION MODE ====================
+    private boolean calibrationMode = false;
+    private boolean calibratingCCW = true;  // true = CCW offset, false = CW offset
+    private boolean lastG1Start = false, lastG1Back = false;
+    private boolean lastG2B = false;
 
     @Override
     public void init() {
@@ -246,8 +255,8 @@ public class SpindexerMotorTuning extends OpMode {
     // ==================== STATE MACHINE ====================
 
     private void executeStateMachine() {
-        // Always check for passive homing opportunity
-        if (currentState != State.HOMING) {
+        // Check for passive homing opportunity (not during homing or calibration)
+        if (currentState != State.HOMING && currentState != State.CALIBRATING) {
             checkPassiveHoming();
         }
         
@@ -262,6 +271,9 @@ public class SpindexerMotorTuning extends OpMode {
                 break;
             case HOMING:
                 executeHoming();
+                break;
+            case CALIBRATING:
+                executeCalibration();
                 break;
             case MANUAL:
             case IDLE:
@@ -280,6 +292,31 @@ public class SpindexerMotorTuning extends OpMode {
         output = clamp(output, -MAX_POWER, MAX_POWER);
 
         motor.setPower(output);
+    }
+    
+    /**
+     * Ejecuta la calibración de offset.
+     * El motor rota hasta encontrar el sensor, luego se detiene.
+     * El usuario puede ajustar el offset con GP2 DPAD.
+     * El ángulo actual se muestra como el offset actual.
+     */
+    private void executeCalibration() {
+        if (limitSwitch.isPressed()) {
+            // Sensor encontrado - detener y permitir ajuste de offset
+            motor.setPower(0);
+            
+            // El ángulo actual es el offset desde donde detectamos el sensor
+            // El usuario ajusta el offset hasta que el ángulo muestre 0° en el cero real
+        } else if (homingTimer.milliseconds() > HOMING_TIMEOUT_MS) {
+            // Timeout
+            motor.setPower(0);
+            calibrationMode = false;
+            currentState = State.IDLE;
+        } else {
+            // Buscar sensor rotando en dirección CCW
+            motor.setPower(HOMING_POWER);
+            lastMovementDirection = 1; // CCW
+        }
     }
 
     private void executeHoming() {
@@ -380,6 +417,17 @@ public class SpindexerMotorTuning extends OpMode {
         homingTimer.reset();
         homingComplete = false;
     }
+    
+    /**
+     * Inicia el modo de calibración de offset.
+     * El motor rotará hasta encontrar el sensor, luego se detiene
+     * y permite ajustar el offset manualmente.
+     */
+    private void startCalibration() {
+        currentState = State.CALIBRATING;
+        homingTimer.reset();
+        calibratingCCW = true;  // Empezar calibrando CCW
+    }
 
     // ==================== GAMEPAD HANDLERS ====================
 
@@ -456,55 +504,124 @@ public class SpindexerMotorTuning extends OpMode {
             currentState = State.IDLE;
         }
         lastRB = gamepad1.right_bumper;
+        
+        // START -> Enter calibration mode
+        if (gamepad1.start && !lastG1Start) {
+            calibrationMode = true;
+            startCalibration();
+        }
+        lastG1Start = gamepad1.start;
+        
+        // BACK -> Exit calibration mode
+        if (gamepad1.back && !lastG1Back) {
+            calibrationMode = false;
+            currentState = State.IDLE;
+        }
+        lastG1Back = gamepad1.back;
     }
 
     private void handleGamepad2Tuning() {
-        // DPAD UP -> kP++
-        if (gamepad2.dpad_up && !lastG2DUp) {
-            kP += KP_INCREMENT;
-            resetAnalytics();
-        }
-        lastG2DUp = gamepad2.dpad_up;
+        if (calibrationMode) {
+            // En modo calibración, DPAD ajusta offsets
+            
+            // DPAD UP -> Offset + 1°
+            if (gamepad2.dpad_up && !lastG2DUp) {
+                if (calibratingCCW) {
+                    HOME_OFFSET_CCW_DEG += OFFSET_INCREMENT_COARSE;
+                } else {
+                    HOME_OFFSET_CW_DEG += OFFSET_INCREMENT_COARSE;
+                }
+            }
+            lastG2DUp = gamepad2.dpad_up;
+            
+            // DPAD DOWN -> Offset - 1°
+            if (gamepad2.dpad_down && !lastG2DDown) {
+                if (calibratingCCW) {
+                    HOME_OFFSET_CCW_DEG -= OFFSET_INCREMENT_COARSE;
+                } else {
+                    HOME_OFFSET_CW_DEG -= OFFSET_INCREMENT_COARSE;
+                }
+            }
+            lastG2DDown = gamepad2.dpad_down;
+            
+            // DPAD RIGHT -> Offset + 0.5°
+            if (gamepad2.dpad_right && !lastG2DRight) {
+                if (calibratingCCW) {
+                    HOME_OFFSET_CCW_DEG += OFFSET_INCREMENT_FINE;
+                } else {
+                    HOME_OFFSET_CW_DEG += OFFSET_INCREMENT_FINE;
+                }
+            }
+            lastG2DRight = gamepad2.dpad_right;
+            
+            // DPAD LEFT -> Offset - 0.5°
+            if (gamepad2.dpad_left && !lastG2DLeft) {
+                if (calibratingCCW) {
+                    HOME_OFFSET_CCW_DEG -= OFFSET_INCREMENT_FINE;
+                } else {
+                    HOME_OFFSET_CW_DEG -= OFFSET_INCREMENT_FINE;
+                }
+            }
+            lastG2DLeft = gamepad2.dpad_left;
+            
+            // B -> Toggle CCW/CW offset
+            if (gamepad2.b && !lastG2B) {
+                calibratingCCW = !calibratingCCW;
+            }
+            lastG2B = gamepad2.b;
+            
+        } else {
+            // Modo normal - DPAD ajusta PD
+            
+            // DPAD UP -> kP++
+            if (gamepad2.dpad_up && !lastG2DUp) {
+                kP += KP_INCREMENT;
+                resetAnalytics();
+            }
+            lastG2DUp = gamepad2.dpad_up;
 
-        // DPAD DOWN -> kP--
-        if (gamepad2.dpad_down && !lastG2DDown) {
-            kP = Math.max(0, kP - KP_INCREMENT);
-            resetAnalytics();
-        }
-        lastG2DDown = gamepad2.dpad_down;
+            // DPAD DOWN -> kP--
+            if (gamepad2.dpad_down && !lastG2DDown) {
+                kP = Math.max(0, kP - KP_INCREMENT);
+                resetAnalytics();
+            }
+            lastG2DDown = gamepad2.dpad_down;
 
-        // DPAD RIGHT -> kD++
-        if (gamepad2.dpad_right && !lastG2DRight) {
-            kD += KD_INCREMENT;
-            resetAnalytics();
-        }
-        lastG2DRight = gamepad2.dpad_right;
+            // DPAD RIGHT -> kD++
+            if (gamepad2.dpad_right && !lastG2DRight) {
+                kD += KD_INCREMENT;
+                resetAnalytics();
+            }
+            lastG2DRight = gamepad2.dpad_right;
 
-        // DPAD LEFT -> kD--
-        if (gamepad2.dpad_left && !lastG2DLeft) {
-            kD = Math.max(0, kD - KD_INCREMENT);
-            resetAnalytics();
+            // DPAD LEFT -> kD--
+            if (gamepad2.dpad_left && !lastG2DLeft) {
+                kD = Math.max(0, kD - KD_INCREMENT);
+                resetAnalytics();
+            }
+            lastG2DLeft = gamepad2.dpad_left;
         }
-        lastG2DLeft = gamepad2.dpad_left;
 
-        // A -> Toggle wrapping
+        // A -> Toggle wrapping (siempre disponible)
         if (gamepad2.a && !lastG2A) {
             wrappingEnabled = !wrappingEnabled;
         }
         lastG2A = gamepad2.a;
 
-        // Y -> Reset PID
+        // Y -> Reset PID (siempre disponible)
         if (gamepad2.y && !lastG2Y) {
             kP = DEFAULT_KP;
             kD = DEFAULT_KD;
         }
         lastG2Y = gamepad2.y;
 
-        // Left Bumper -> Print values
+        // Left Bumper -> Print values (ahora incluye offsets)
         if (gamepad2.left_bumper && !lastG2LB) {
-            System.out.println("===== SPINDEXER PD VALUES =====");
+            System.out.println("===== SPINDEXER VALUES =====");
             System.out.println("public static double kP = " + kP + ";");
             System.out.println("public static double kD = " + kD + ";");
+            System.out.println("public static double HOME_OFFSET_CCW_DEG = " + HOME_OFFSET_CCW_DEG + ";");
+            System.out.println("public static double HOME_OFFSET_CW_DEG = " + HOME_OFFSET_CW_DEG + ";");
             System.out.println("Wrapping: " + wrappingEnabled);
             System.out.println("================================");
         }
@@ -580,9 +697,19 @@ public class SpindexerMotorTuning extends OpMode {
         
         // HOMING OFFSETS
         telemetry.addLine();
-        telemetry.addLine("═══════ HOMING OFFSETS ═══════");
-        telemetry.addData("CCW Offset", "%.1f°", HOME_OFFSET_CCW_DEG);
-        telemetry.addData("CW Offset", "%.1f°", HOME_OFFSET_CW_DEG);
+        if (calibrationMode) {
+            telemetry.addLine("══ 🎯 CALIBRACIÓN ACTIVA ══");
+            telemetry.addData("Editando", calibratingCCW ? ">>> CCW <<<" : ">>> CW <<<");
+            telemetry.addData("CCW Offset", (calibratingCCW ? "▶ " : "  ") + String.format("%.1f°", HOME_OFFSET_CCW_DEG));
+            telemetry.addData("CW Offset",  (!calibratingCCW ? "▶ " : "  ") + String.format("%.1f°", HOME_OFFSET_CW_DEG));
+            telemetry.addLine("GP2: ↑↓=±1° ←→=±0.5° B=Toggle");
+            telemetry.addLine("GP1: BACK=Salir");
+        } else {
+            telemetry.addLine("═══════ HOMING OFFSETS ═══════");
+            telemetry.addData("CCW Offset", "%.1f°", HOME_OFFSET_CCW_DEG);
+            telemetry.addData("CW Offset", "%.1f°", HOME_OFFSET_CW_DEG);
+            telemetry.addLine("GP1: START=Modo Calibración");
+        }
 
         // ANALYSIS
         telemetry.addLine();
