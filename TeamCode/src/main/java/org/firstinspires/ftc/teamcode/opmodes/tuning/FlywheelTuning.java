@@ -77,7 +77,7 @@ import org.firstinspires.ftc.teamcode.subsystems.FlywheelSubsystem;
  * 
  * ════════════════════════════════════════════════════════════
  */
-@Disabled
+//@Di
 @TeleOp(name = "Flywheel Tuning", group = "Tuning")
 public class FlywheelTuning extends OpMode {
     

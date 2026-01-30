@@ -10,7 +10,7 @@ package org.firstinspires.ftc.teamcode.constants;
 public class FlywheelConstants {
     
     // ==================== HARDWARE ====================
-    public static final String MOTOR_NAME = "flywheelMotor";
+    public static final String  MOTOR_NAME = "flywheelMotor";
     
     // ==================== ESPECIFICACIONES DEL MOTOR ====================
     /** RPM libre del motor REV HD Hex */
@@ -47,7 +47,7 @@ public class FlywheelConstants {
      * Es la potencia mínima para que el motor empiece a girar.
      * TUNEAR: Incrementar hasta que el motor apenas empiece a moverse.
      */
-    public static double kS = 0.08;
+    public static double kS = 0.06;
     
     /**
      * kV: Potencia por unidad de velocidad.
@@ -70,7 +70,7 @@ public class FlywheelConstants {
      * Corrección fina basada en el error de velocidad.
      * TUNEAR: Empezar pequeño, incrementar hasta eliminar error estacionario.
      */
-    public static double kP = 0.0003;
+    public static double kP = 0.00016;
     
     /**
      * kI: Ganancia integral.
@@ -155,8 +155,6 @@ public class FlywheelConstants {
      * Útil para el comando de visión que calcula velocidad según distancia.
      * 
      * @param distance Distancia al target (unidades arbitrarias)
-     * @param minDistance Distancia mínima del rango
-     * @param maxDistance Distancia máxima del rango
      * @return RPM interpolado entre NEAR_ZONE_MIN_RPM y NEAR_ZONE_MAX_RPM
      */
     public static double interpolateRPMForDistance(double distance) {

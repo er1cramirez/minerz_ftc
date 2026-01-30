@@ -32,13 +32,13 @@ import org.firstinspires.ftc.teamcode.constants.EjectorConstants;
  * - Posiciones guardadas (STOW y EJECT)
  * - Instrucciones de calibración
  */
-@Disabled
+// @Disabled
 @TeleOp(name = "Ejector Test", group = "Testing")
 
 public class EjectorTest extends CommandOpMode {
-    
+
     private EjectorSubsystem ejector;
-    
+
     // Control de botones (debouncing)
     private boolean lastA = false;
     private boolean lastB = false;
@@ -49,24 +49,24 @@ public class EjectorTest extends CommandOpMode {
     private boolean lastDpadLeft = false;
     private boolean lastRightBumper = false;
     private boolean lastLeftBumper = false;
-    
+
     // Variables de calibración manual
     private double manualPosition = 0.0;
     private boolean manualMode = false;
     private double savedStowPosition = EjectorConstants.Positions.STOW_POSITION;
     private double savedEjectPosition = EjectorConstants.Positions.EJECT_POSITION;
-    
+
     @Override
     public void initialize() {
         // Crear subsistema
         ejector = new EjectorSubsystem(hardwareMap);
-        
+
         // Registrar subsistema
         register(ejector);
-        
+
         // Inicializar posición manual
         manualPosition = savedStowPosition;
-        
+
         telemetry.addLine("Ejector Test & Calibration");
         telemetry.addLine();
         telemetry.addLine("TESTING:");
@@ -81,32 +81,32 @@ public class EjectorTest extends CommandOpMode {
         telemetry.addLine("  LB: Save as STOW");
         telemetry.update();
     }
-    
+
     @Override
     public void run() {
-        super.run();  // Ejecuta el scheduler
-        
+        super.run(); // Ejecuta el scheduler
+
         // Controles manuales
         handleTestingControls();
         handleCalibrationControls();
-        
+
         // Actualizar telemetría
         updateTelemetry();
     }
-    
+
     private void handleTestingControls() {
         // A: Comando completo - EJECT y luego STOW automáticamente usando el comando
         if (gamepad1.a && !lastA) {
             manualMode = false;
             new EjectCycleCommand(ejector).schedule();
         }
-        lastA = gamepad1.a;        // B: Solo EJECT
+        lastA = gamepad1.a; // B: Solo EJECT
         if (gamepad1.b && !lastB) {
             manualMode = false;
             ejector.eject();
         }
         lastB = gamepad1.b;
-        
+
         // X: Solo STOW
         if (gamepad1.x && !lastX) {
             manualMode = false;
@@ -114,7 +114,7 @@ public class EjectorTest extends CommandOpMode {
         }
         lastX = gamepad1.x;
     }
-    
+
     private void handleCalibrationControls() {
         // DPAD UP: Incrementar posición (+0.01)
         if (gamepad1.dpad_up && !lastDpadUp) {
@@ -123,7 +123,7 @@ public class EjectorTest extends CommandOpMode {
             setManualPosition(manualPosition);
         }
         lastDpadUp = gamepad1.dpad_up;
-        
+
         // DPAD DOWN: Decrementar posición (-0.01)
         if (gamepad1.dpad_down && !lastDpadDown) {
             manualMode = true;
@@ -131,7 +131,7 @@ public class EjectorTest extends CommandOpMode {
             setManualPosition(manualPosition);
         }
         lastDpadDown = gamepad1.dpad_down;
-        
+
         // DPAD RIGHT: Incrementar posición (+0.001)
         if (gamepad1.dpad_right && !lastDpadRight) {
             manualMode = true;
@@ -139,7 +139,7 @@ public class EjectorTest extends CommandOpMode {
             setManualPosition(manualPosition);
         }
         lastDpadRight = gamepad1.dpad_right;
-        
+
         // DPAD LEFT: Decrementar posición (-0.001)
         if (gamepad1.dpad_left && !lastDpadLeft) {
             manualMode = true;
@@ -147,52 +147,52 @@ public class EjectorTest extends CommandOpMode {
             setManualPosition(manualPosition);
         }
         lastDpadLeft = gamepad1.dpad_left;
-        
+
         // RIGHT BUMPER: Guardar como EJECT
         if (gamepad1.right_bumper && !lastRightBumper) {
             savedEjectPosition = manualPosition;
         }
         lastRightBumper = gamepad1.right_bumper;
-        
+
         // LEFT BUMPER: Guardar como STOW
         if (gamepad1.left_bumper && !lastLeftBumper) {
             savedStowPosition = manualPosition;
         }
         lastLeftBumper = gamepad1.left_bumper;
     }
-    
+
     private void setManualPosition(double position) {
         // Acceso directo al servo para testing manual
         ejector.setPosition(position);
     }
-    
+
     private void updateTelemetry() {
         telemetry.clear();
-        
+
         // Encabezado
         telemetry.addLine("=== EJECTOR TEST ===");
         telemetry.addLine();
-        
+
         // === ESTADO ===
         telemetry.addLine("--- STATUS ---");
         telemetry.addData("State", ejector.getState().name());
         telemetry.addData("Is Stowed", ejector.isStowed() ? "✓" : "✗");
         telemetry.addData("Mode", manualMode ? "MANUAL CALIBRATION" : "AUTO TESTING");
         telemetry.addLine();
-        
+
         // === POSICIONES ===
         telemetry.addLine("--- POSITIONS ---");
         if (manualMode) {
             telemetry.addData("Current Position", "%.3f", manualPosition);
         }
-        telemetry.addData("STOW Position", "%.3f %s", 
-                         savedStowPosition,
-                         savedStowPosition == EjectorConstants.Positions.STOW_POSITION ? "(default)" : "(custom)");
-        telemetry.addData("EJECT Position", "%.3f %s", 
-                         savedEjectPosition,
-                         savedEjectPosition == EjectorConstants.Positions.EJECT_POSITION ? "(default)" : "(custom)");
+        telemetry.addData("STOW Position", "%.3f %s",
+                savedStowPosition,
+                savedStowPosition == EjectorConstants.Positions.STOW_POSITION ? "(default)" : "(custom)");
+        telemetry.addData("EJECT Position", "%.3f %s",
+                savedEjectPosition,
+                savedEjectPosition == EjectorConstants.Positions.EJECT_POSITION ? "(default)" : "(custom)");
         telemetry.addLine();
-        
+
         // === INSTRUCCIONES ===
         telemetry.addLine("--- CONTROLS ---");
         if (manualMode) {
@@ -210,17 +210,17 @@ public class EjectorTest extends CommandOpMode {
             telemetry.addLine("  DPAD: Enter calibration mode");
         }
         telemetry.addLine();
-        
+
         // === NOTAS DE CALIBRACIÓN ===
         if (savedStowPosition != EjectorConstants.Positions.STOW_POSITION ||
-            savedEjectPosition != EjectorConstants.Positions.EJECT_POSITION) {
+                savedEjectPosition != EjectorConstants.Positions.EJECT_POSITION) {
             telemetry.addLine("--- CALIBRATION NOTES ---");
             telemetry.addLine("⚠️ Custom positions detected!");
             telemetry.addLine("Update EjectorConstants.java with:");
             telemetry.addLine(String.format("  STOW_POSITION = %.3f;", savedStowPosition));
             telemetry.addLine(String.format("  EJECT_POSITION = %.3f;", savedEjectPosition));
         }
-        
+
         telemetry.update();
     }
 }
