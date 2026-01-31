@@ -210,7 +210,11 @@ public class BlueMainTeleOp extends CommandOpMode {
                 operatorGamepad.getGamepadButton(GamepadKeys.Button.Y)
                                 .whenPressed(
                                                 new ConditionalCommand(
-                                                                new EjectCycleCommand(ejector),
+                                                                new SequentialCommandGroup(
+                                                                                new EjectCycleCommand(ejector),
+                                                                                new InstantCommand(() -> spindex
+                                                                                                .clearSlot(spindex
+                                                                                                                .getCurrentSlotIndex()))),
                                                                 new InstantCommand(() -> UserGamepadFeedback
                                                                                 .playWarning(gamepad2)),
                                                                 () -> (spindex.getState() == SpindexerSubsystem.SpindexerState.AT_OUTTAKE
