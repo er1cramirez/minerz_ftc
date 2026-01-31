@@ -196,11 +196,12 @@ public class SpindexerSubsystem extends SubsystemBase {
 
     /**
      * Sets absolute target angle.
+     * Note: Callers (moveToIntakePosition, moveToOuttakePosition) set MOVING state.
      */
     public void setTargetAngle(double degrees) {
         targetAngleDeg = degrees;
         lastError = 0;
-        currentState = SpindexerState.MOVING;
+        // State is set by caller - don't override here to avoid state confusion
     }
 
     // ==================== POSITION FEEDBACK ====================
@@ -482,11 +483,12 @@ public class SpindexerSubsystem extends SubsystemBase {
 
     private SpindexerState determineStateFromAngle(double angle) {
         // Determine if at intake or outtake based on angle
+        // Use calculateWrappedError for shortest-distance comparison [-180, 180]
         for (int i = 0; i < 3; i++) {
-            if (Math.abs(wrapAngle(angle - getIntakeAngle(i))) < SpindexerConstants.POSITION_TOLERANCE_DEG) {
+            if (Math.abs(calculateWrappedError(angle, getIntakeAngle(i))) <= SpindexerConstants.POSITION_TOLERANCE_DEG) {
                 return SpindexerState.AT_INTAKE;
             }
-            if (Math.abs(wrapAngle(angle - getOuttakeAngle(i))) < SpindexerConstants.POSITION_TOLERANCE_DEG) {
+            if (Math.abs(calculateWrappedError(angle, getOuttakeAngle(i))) <= SpindexerConstants.POSITION_TOLERANCE_DEG) {
                 return SpindexerState.AT_OUTTAKE;
             }
         }
