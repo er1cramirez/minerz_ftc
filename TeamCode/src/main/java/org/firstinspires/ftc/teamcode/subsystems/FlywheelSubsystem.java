@@ -213,8 +213,8 @@ public class FlywheelSubsystem extends SubsystemBase {
             return;
         }
 
-        double error = Math.abs(targetRPM - currentRPM);
-        boolean withinTolerance = error <= FlywheelConstants.RPM_TOLERANCE;
+        double error = targetRPM - currentRPM;
+        boolean withinTolerance = Math.abs(error) <= FlywheelConstants.RPM_TOLERANCE;
 
         // Determine if it's in idle or firing speed
         boolean isIdleTarget = Math.abs(targetRPM - FlywheelConstants.IDLE_SPIN_RPM) < 100;

@@ -47,7 +47,7 @@ public class FlywheelConstants {
      * Es la potencia mínima para que el motor empiece a girar.
      * TUNEAR: Incrementar hasta que el motor apenas empiece a moverse.
      */
-    public static double kS = 0.06;
+    public static double kS = 0.07;
     
     /**
      * kV: Potencia por unidad de velocidad.
@@ -55,7 +55,7 @@ public class FlywheelConstants {
      * Fórmula teórica inicial: 1.0 / MOTOR_FREE_RPM ≈ 0.000167
      * TUNEAR: Ajustar hasta que FF solo llegue cerca del target.
      */
-    public static double kV = 0.00018;
+    public static double kV = 0.00016;
     
     /**
      * kA: Potencia extra durante aceleración.
@@ -70,7 +70,7 @@ public class FlywheelConstants {
      * Corrección fina basada en el error de velocidad.
      * TUNEAR: Empezar pequeño, incrementar hasta eliminar error estacionario.
      */
-    public static double kP = 0.00016;
+    public static double kP = 0.01070;
     
     /**
      * kI: Ganancia integral.
