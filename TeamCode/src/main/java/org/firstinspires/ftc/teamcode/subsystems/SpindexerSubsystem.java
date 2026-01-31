@@ -59,7 +59,7 @@ public class SpindexerSubsystem extends SubsystemBase {
     // ==================== STATE ====================
 
     private SpindexerState currentState = SpindexerState.IDLE;
-    private final SlotState[] slotStates = {SlotState.EMPTY, SlotState.EMPTY, SlotState.EMPTY};
+    private final SlotState[] slotStates = { SlotState.EMPTY, SlotState.EMPTY, SlotState.EMPTY };
     private int currentSlotIndex = 0;
     private boolean isHomed = false;
 
@@ -72,7 +72,7 @@ public class SpindexerSubsystem extends SubsystemBase {
     private double lastPositionTicks = 0.0;
     private long lastUpdateTimeMs = 0;
     private double lastError = 0.0;
-    private int lastMovementDirection = 0;  // +1=CCW, -1=CW
+    private int lastMovementDirection = 0; // +1=CCW, -1=CW
     private boolean wasLimitPressed = false;
 
     // ==================== HOMING ====================
@@ -111,15 +111,16 @@ public class SpindexerSubsystem extends SubsystemBase {
     @Override
     public void periodic() {
         updateSensorCache();
-        
+
         if (currentState == SpindexerState.HOMING) {
             executeHoming();
-        } else if (currentState == SpindexerState.MOVING) {
+        } else {
+            // Siempre ejecutar control de posición para mantener la posición activamente
             executePositionControl();
             checkPassiveHoming();
-            
-            // Update state when position reached
-            if (isAtPositionAndStable()) {
+
+            // Update state when position reached (solo si estaba MOVING)
+            if (currentState == SpindexerState.MOVING && isAtPositionAndStable()) {
                 currentState = determineStateFromAngle(currentAngleDeg);
             }
         }
@@ -152,7 +153,7 @@ public class SpindexerSubsystem extends SubsystemBase {
         output = clamp(output, -SpindexerConstants.MAX_POWER, SpindexerConstants.MAX_POWER);
 
         motor.setPower(output);
-        
+
         // Track direction for homing
         if (Math.abs(output) > 0.05) {
             lastMovementDirection = output > 0 ? 1 : -1;
@@ -165,8 +166,10 @@ public class SpindexerSubsystem extends SubsystemBase {
     private double calculateWrappedError(double current, double target) {
         double error = target - current;
         // Normalize to [-180, 180] for shortest path
-        while (error > 180) error -= 360;
-        while (error < -180) error += 360;
+        while (error > 180)
+            error -= 360;
+        while (error < -180)
+            error += 360;
         return error;
     }
 
@@ -176,8 +179,9 @@ public class SpindexerSubsystem extends SubsystemBase {
      * Moves the specified slot to the intake position.
      */
     public void moveToIntakePosition(int slotIndex) {
-        if (!isValidSlotIndex(slotIndex)) return;
-        
+        if (!isValidSlotIndex(slotIndex))
+            return;
+
         setTargetAngle(getIntakeAngle(slotIndex));
         currentSlotIndex = slotIndex;
         currentState = SpindexerState.MOVING;
@@ -187,8 +191,9 @@ public class SpindexerSubsystem extends SubsystemBase {
      * Moves the specified slot to the outtake position.
      */
     public void moveToOuttakePosition(int slotIndex) {
-        if (!isValidSlotIndex(slotIndex)) return;
-        
+        if (!isValidSlotIndex(slotIndex))
+            return;
+
         setTargetAngle(getOuttakeAngle(slotIndex));
         currentSlotIndex = slotIndex;
         currentState = SpindexerState.MOVING;
@@ -210,21 +215,29 @@ public class SpindexerSubsystem extends SubsystemBase {
      * @return true if at target position within tolerance
      */
     public boolean isAtPosition() {
-        return Math.abs(calculateWrappedError(currentAngleDeg, targetAngleDeg)) 
-               <= SpindexerConstants.POSITION_TOLERANCE_DEG;
+        return Math.abs(
+                calculateWrappedError(currentAngleDeg, targetAngleDeg)) <= SpindexerConstants.POSITION_TOLERANCE_DEG;
     }
 
     /**
      * @return true if at position AND velocity is low (stable)
      */
     public boolean isAtPositionAndStable() {
-        return isAtPosition() && 
-               Math.abs(currentVelocityDegPerSec) <= SpindexerConstants.VELOCITY_TOLERANCE_DEG_PER_SEC;
+        return isAtPosition() &&
+                Math.abs(currentVelocityDegPerSec) <= SpindexerConstants.VELOCITY_TOLERANCE_DEG_PER_SEC;
     }
 
-    public double getCurrentAngle() { return currentAngleDeg; }
-    public double getTargetAngle() { return targetAngleDeg; }
-    public double getPositionError() { return calculateWrappedError(currentAngleDeg, targetAngleDeg); }
+    public double getCurrentAngle() {
+        return currentAngleDeg;
+    }
+
+    public double getTargetAngle() {
+        return targetAngleDeg;
+    }
+
+    public double getPositionError() {
+        return calculateWrappedError(currentAngleDeg, targetAngleDeg);
+    }
 
     // ==================== HOMING ====================
 
@@ -257,19 +270,18 @@ public class SpindexerSubsystem extends SubsystemBase {
      */
     private void checkPassiveHoming() {
         boolean isPressed = limitSwitch.isPressed();
-        
+
         if (isPressed && !wasLimitPressed && lastMovementDirection != 0) {
-            double offsetDeg = lastMovementDirection > 0 ? 
-                SpindexerConstants.HOME_OFFSET_CCW_DEG : 
-                SpindexerConstants.HOME_OFFSET_CW_DEG;
-            
+            double offsetDeg = lastMovementDirection > 0 ? SpindexerConstants.HOME_OFFSET_CCW_DEG
+                    : SpindexerConstants.HOME_OFFSET_CW_DEG;
+
             double assumedError = Math.abs(wrapAngle(currentAngleDeg) - offsetDeg);
-            
+
             if (assumedError > SpindexerConstants.SMART_HOMING_THRESHOLD_DEG || !isHomed) {
                 applyHomeWithOffset(offsetDeg);
             }
         }
-        
+
         wasLimitPressed = isPressed;
     }
 
@@ -287,50 +299,92 @@ public class SpindexerSubsystem extends SubsystemBase {
         lastError = 0;
     }
 
-    public boolean isHomed() { return isHomed; }
+    public boolean isHomed() {
+        return isHomed;
+    }
+
+    /**
+     * @return true si el homing está actualmente en progreso
+     */
+    public boolean isHomingInProgress() {
+        return currentState == SpindexerState.HOMING;
+    }
+
+    /**
+     * @return true si el homing se completó exitosamente
+     *         Use después de llamar startHoming() para verificar cuando termina
+     */
+    public boolean isHomingComplete() {
+        return isHomed && currentState != SpindexerState.HOMING;
+    }
+
+    /**
+     * @return true si el limit switch está actualmente presionado
+     */
+    public boolean isLimitSwitchPressed() {
+        return limitSwitch.isPressed();
+    }
 
     // ==================== STATE ACCESSORS ====================
 
-    public SpindexerState getState() { return currentState; }
-    public int getCurrentSlotIndex() { return currentSlotIndex; }
+    public SpindexerState getState() {
+        return currentState;
+    }
+
+    public int getCurrentSlotIndex() {
+        return currentSlotIndex;
+    }
 
     public SlotState getSlotState(int slotIndex) {
         return isValidSlotIndex(slotIndex) ? slotStates[slotIndex] : SlotState.EMPTY;
     }
 
-    public SlotState getCurrentSlotState() { return slotStates[currentSlotIndex]; }
-
-    public void setSlotState(int slotIndex, SlotState state) {
-        if (isValidSlotIndex(slotIndex)) slotStates[slotIndex] = state;
+    public SlotState getCurrentSlotState() {
+        return slotStates[currentSlotIndex];
     }
 
-    public void clearSlot(int slotIndex) { setSlotState(slotIndex, SlotState.EMPTY); }
+    public void setSlotState(int slotIndex, SlotState state) {
+        if (isValidSlotIndex(slotIndex))
+            slotStates[slotIndex] = state;
+    }
+
+    public void clearSlot(int slotIndex) {
+        setSlotState(slotIndex, SlotState.EMPTY);
+    }
 
     public void clearAllSlots() {
-        for (int i = 0; i < 3; i++) slotStates[i] = SlotState.EMPTY;
+        for (int i = 0; i < 3; i++)
+            slotStates[i] = SlotState.EMPTY;
     }
 
     public boolean isFull() {
-        for (SlotState s : slotStates) if (s == SlotState.EMPTY) return false;
+        for (SlotState s : slotStates)
+            if (s == SlotState.EMPTY)
+                return false;
         return true;
     }
 
     public int getFilledSlotCount() {
         int count = 0;
-        for (SlotState s : slotStates) if (s != SlotState.EMPTY) count++;
+        for (SlotState s : slotStates)
+            if (s != SlotState.EMPTY)
+                count++;
         return count;
     }
 
     public int getNextEmptySlot() {
         for (int i = 0; i < 3; i++) {
             int idx = (currentSlotIndex + i) % 3;
-            if (slotStates[idx] == SlotState.EMPTY) return idx;
+            if (slotStates[idx] == SlotState.EMPTY)
+                return idx;
         }
         return -1;
     }
 
     public int getGreenSlotIndex() {
-        for (int i = 0; i < 3; i++) if (slotStates[i] == SlotState.GREEN) return i;
+        for (int i = 0; i < 3; i++)
+            if (slotStates[i] == SlotState.GREEN)
+                return i;
         return -1;
     }
 
@@ -359,7 +413,9 @@ public class SpindexerSubsystem extends SubsystemBase {
         return shotNumber >= 0 && shotNumber < totalShots;
     }
 
-    public int getTotalShots() { return totalShots; }
+    public int getTotalShots() {
+        return totalShots;
+    }
 
     public void clearCurrentShotAndAdvance() {
         if (currentShotIndex < totalShots) {
@@ -371,9 +427,11 @@ public class SpindexerSubsystem extends SubsystemBase {
     public java.util.List<Integer> getShootingOrder(ShootingStrategy strategy) {
         java.util.List<Integer> slots = new java.util.ArrayList<>();
         for (int i = 0; i < 3; i++) {
-            if (slotStates[i] != SlotState.EMPTY) slots.add(i);
+            if (slotStates[i] != SlotState.EMPTY)
+                slots.add(i);
         }
-        if (slots.isEmpty()) return slots;
+        if (slots.isEmpty())
+            return slots;
 
         switch (strategy) {
             case FASTEST:
@@ -381,23 +439,26 @@ public class SpindexerSubsystem extends SubsystemBase {
                 break;
             case GREEN_FIRST:
                 slots.sort((a, b) -> Boolean.compare(
-                    slotStates[a] != SlotState.GREEN, 
-                    slotStates[b] != SlotState.GREEN));
+                        slotStates[a] != SlotState.GREEN,
+                        slotStates[b] != SlotState.GREEN));
                 break;
             case GREEN_LAST:
                 slots.sort((a, b) -> Boolean.compare(
-                    slotStates[a] == SlotState.GREEN, 
-                    slotStates[b] == SlotState.GREEN));
+                        slotStates[a] == SlotState.GREEN,
+                        slotStates[b] == SlotState.GREEN));
                 break;
             case GREEN_MIDDLE:
                 java.util.List<Integer> green = new java.util.ArrayList<>();
                 java.util.List<Integer> others = new java.util.ArrayList<>();
                 for (int s : slots) {
-                    if (slotStates[s] == SlotState.GREEN) green.add(s);
-                    else others.add(s);
+                    if (slotStates[s] == SlotState.GREEN)
+                        green.add(s);
+                    else
+                        others.add(s);
                 }
                 slots.clear();
-                if (!others.isEmpty()) slots.add(others.remove(0));
+                if (!others.isEmpty())
+                    slots.add(others.remove(0));
                 slots.addAll(green);
                 slots.addAll(others);
                 break;
@@ -406,17 +467,30 @@ public class SpindexerSubsystem extends SubsystemBase {
     }
 
     private int getFastestPriority(int slotIndex) {
-        if (slotIndex == 1) return 0;
-        if (slotIndex == 0) return 1;
+        if (slotIndex == 1)
+            return 0;
+        if (slotIndex == 0)
+            return 1;
         return 2;
     }
 
     // ==================== SENSOR ACCESS ====================
 
-    public double getDistance() { return colorSensor.distance(DistanceUnit.CM); }
-    public int getRed() { return colorSensor.red(); }
-    public int getGreen() { return colorSensor.green(); }
-    public int getBlue() { return colorSensor.blue(); }
+    public double getDistance() {
+        return colorSensor.distance(DistanceUnit.CM);
+    }
+
+    public int getRed() {
+        return colorSensor.red();
+    }
+
+    public int getGreen() {
+        return colorSensor.green();
+    }
+
+    public int getBlue() {
+        return colorSensor.blue();
+    }
 
     public float getHue() {
         float[] hsv = new float[3];
@@ -440,10 +514,14 @@ public class SpindexerSubsystem extends SubsystemBase {
 
     public String getSlotEmoji(int slotIndex) {
         switch (slotStates[slotIndex]) {
-            case GREEN: return "🟢";
-            case PURPLE: return "🟣";
-            case UNKNOWN: return "❓";
-            default: return "⚫";
+            case GREEN:
+                return "🟢";
+            case PURPLE:
+                return "🟣";
+            case UNKNOWN:
+                return "❓";
+            default:
+                return "⚫";
         }
     }
 
@@ -451,8 +529,8 @@ public class SpindexerSubsystem extends SubsystemBase {
         StringBuilder sb = new StringBuilder("📥 ");
         for (int i = 0; i < 3; i++) {
             sb.append(i == currentSlotIndex ? "[" : " ")
-              .append(getSlotEmoji(i))
-              .append(i == currentSlotIndex ? "]" : " ");
+                    .append(getSlotEmoji(i))
+                    .append(i == currentSlotIndex ? "]" : " ");
         }
         sb.append(" S").append(currentSlotIndex);
         sb.append(" ▸").append(currentState.name().replace("AT_", ""));
@@ -465,19 +543,27 @@ public class SpindexerSubsystem extends SubsystemBase {
 
     private double getIntakeAngle(int slotIndex) {
         switch (slotIndex) {
-            case 0: return SpindexerConstants.SLOT_0_INTAKE_ANGLE;
-            case 1: return SpindexerConstants.SLOT_1_INTAKE_ANGLE;
-            case 2: return SpindexerConstants.SLOT_2_INTAKE_ANGLE;
-            default: return 0;
+            case 0:
+                return SpindexerConstants.SLOT_0_INTAKE_ANGLE;
+            case 1:
+                return SpindexerConstants.SLOT_1_INTAKE_ANGLE;
+            case 2:
+                return SpindexerConstants.SLOT_2_INTAKE_ANGLE;
+            default:
+                return 0;
         }
     }
 
     private double getOuttakeAngle(int slotIndex) {
         switch (slotIndex) {
-            case 0: return SpindexerConstants.SLOT_0_OUTTAKE_ANGLE;
-            case 1: return SpindexerConstants.SLOT_1_OUTTAKE_ANGLE;
-            case 2: return SpindexerConstants.SLOT_2_OUTTAKE_ANGLE;
-            default: return 0;
+            case 0:
+                return SpindexerConstants.SLOT_0_OUTTAKE_ANGLE;
+            case 1:
+                return SpindexerConstants.SLOT_1_OUTTAKE_ANGLE;
+            case 2:
+                return SpindexerConstants.SLOT_2_OUTTAKE_ANGLE;
+            default:
+                return 0;
         }
     }
 
@@ -485,10 +571,12 @@ public class SpindexerSubsystem extends SubsystemBase {
         // Determine if at intake or outtake based on angle
         // Use calculateWrappedError for shortest-distance comparison [-180, 180]
         for (int i = 0; i < 3; i++) {
-            if (Math.abs(calculateWrappedError(angle, getIntakeAngle(i))) <= SpindexerConstants.POSITION_TOLERANCE_DEG) {
+            if (Math.abs(
+                    calculateWrappedError(angle, getIntakeAngle(i))) <= SpindexerConstants.POSITION_TOLERANCE_DEG) {
                 return SpindexerState.AT_INTAKE;
             }
-            if (Math.abs(calculateWrappedError(angle, getOuttakeAngle(i))) <= SpindexerConstants.POSITION_TOLERANCE_DEG) {
+            if (Math.abs(
+                    calculateWrappedError(angle, getOuttakeAngle(i))) <= SpindexerConstants.POSITION_TOLERANCE_DEG) {
                 return SpindexerState.AT_OUTTAKE;
             }
         }
@@ -497,7 +585,8 @@ public class SpindexerSubsystem extends SubsystemBase {
 
     private double wrapAngle(double angle) {
         angle = angle % 360;
-        if (angle < 0) angle += 360;
+        if (angle < 0)
+            angle += 360;
         return angle;
     }
 
