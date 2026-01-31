@@ -27,6 +27,7 @@ import org.firstinspires.ftc.teamcode.subsystems.EjectorSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.FlywheelSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.SpindexerSubsystem;
+import org.firstinspires.ftc.teamcode.subsystems.TurretSubsystem;
 import org.firstinspires.ftc.teamcode.telemetry.TelemetryHelper;
 import org.firstinspires.ftc.teamcode.util.UserGamepadFeedback;
 
@@ -41,8 +42,7 @@ public class BlueMainTeleOp extends CommandOpMode {
         private IntakeSubsystem intake;
         private SpindexerSubsystem spindex;
 
-        // TODO: Add these subsystems when integrated
-        // private TurretSubsystem turret;
+        private TurretSubsystem turret;
         private FlywheelSubsystem flywheel;
         private EjectorSubsystem ejector;
         // private VisionSubsystem vision;
@@ -67,8 +67,7 @@ public class BlueMainTeleOp extends CommandOpMode {
                 intake = new IntakeSubsystem(hardwareMap);
                 spindex = new SpindexerSubsystem(hardwareMap);
 
-                // TODO: Initialize when integrated
-                // turret = new TurretSubsystem(hardwareMap);
+                turret = new TurretSubsystem(hardwareMap);
                 flywheel = new FlywheelSubsystem(hardwareMap);
                 ejector = new EjectorSubsystem(hardwareMap);
                 // vision = new VisionSubsystem(hardwareMap);
@@ -91,9 +90,8 @@ public class BlueMainTeleOp extends CommandOpMode {
                                 () -> -driverGamepad.getLeftX(),
                                 () -> -driverGamepad.getRightX());
 
-                register(drive, intake, spindex, flywheel, ejector);
+                register(drive, intake, spindex, turret, flywheel, ejector);
                 drive.setDefaultCommand(driveCommand);
-                // TODO: register(turret, flywheel, ejector, vision);
 
                 // Configure Bindings
                 configureDriverBindings();
@@ -138,6 +136,26 @@ public class BlueMainTeleOp extends CommandOpMode {
                                         } else {
                                                 drive.setRobotCentric();
                                         }
+                                }));
+
+                // ===== TURRET MANUAL CONTROL =====
+                // Right Trigger: Mover torreta hacia la derecha (negativo)
+                // Left Trigger: Mover torreta hacia la izquierda (positivo)
+                // Cuando ningún trigger está presionado, mantener posición actual
+                Trigger turretManualTrigger = new Trigger(
+                                () -> driverGamepad.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) > 0.1
+                                                || driverGamepad.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER) > 0.1);
+                turretManualTrigger
+                                .whileActiveContinuous(new InstantCommand(() -> {
+                                        double rightTrigger = driverGamepad.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER);
+                                        double leftTrigger = driverGamepad.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER);
+                                        // Left trigger = positivo (izquierda), Right trigger = negativo (derecha)
+                                        double turretPower = leftTrigger - rightTrigger;
+                                        turret.setManualPower(turretPower);
+                                }))
+                                .whenInactive(new InstantCommand(() -> {
+                                        // Cuando se sueltan los triggers, mantener posición actual
+                                        turret.setTargetPosition(turret.getCurrentAngleDeg());
                                 }));
         }
 
@@ -289,9 +307,9 @@ public class BlueMainTeleOp extends CommandOpMode {
 
                 // ====== SHOOTER SECTION ======
                 telemetryHelper.addSectionHeader("SHOOTER", "#FF6347");
-                // TODO: Uncomment when Turret is integrated
-                // telemetryHelper.addBigLine(turret.getCompactStatus());
-                telemetryHelper.addLine("Turret: [NOT INTEGRATED]", "gray");
+                telemetryHelper.addLine("Turret: " + String.format("%.1f°", turret.getCurrentAngleDeg()) +
+                                " | " + turret.getStateName());
+
 
                 telemetryHelper.addBigLine(flywheel.getCompactStatus());
                 // Debug: Detailed flywheel state

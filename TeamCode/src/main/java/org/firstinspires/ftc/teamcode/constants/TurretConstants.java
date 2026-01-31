@@ -40,13 +40,13 @@ public class TurretConstants {
      * Límite de rotación en sentido antihorario (visto desde arriba)
      * AJUSTAR según restricciones de cableado
      */
-    public static double MIN_ANGLE_DEG = -135.0;
+    public static double MIN_ANGLE_DEG = -100;
 
     /**
      * Límite de rotación en sentido horario (visto desde arriba)
      * AJUSTAR según restricciones de cableado
      */
-    public static double MAX_ANGLE_DEG = 105.0;
+    public static double MAX_ANGLE_DEG = 100;
 
     /** Margen de seguridad antes de los límites físicos (grados) */
     public static double SOFT_LIMIT_MARGIN_DEG = 5.0;
