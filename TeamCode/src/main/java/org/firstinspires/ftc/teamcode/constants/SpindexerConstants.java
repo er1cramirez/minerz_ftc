@@ -30,6 +30,12 @@ public class SpindexerConstants {
     // ==================== TOLERANCES ====================
     public static final double POSITION_TOLERANCE_DEG = 6.0;
     public static final double VELOCITY_TOLERANCE_DEG_PER_SEC = 10.0;
+    
+    // ==================== SOFT-START / ACCELERATION LIMITING ====================
+    // Limits power change rate (power units per second)
+    // Lower = smoother start, Higher = more responsive
+    // 3.0 = ~0.2s to reach full power from stop
+    public static double MAX_POWER_CHANGE_PER_SEC = 3.0;
 
     // ==================== HOMING CONFIG ====================
     public static final double HOMING_POWER = 0.25;

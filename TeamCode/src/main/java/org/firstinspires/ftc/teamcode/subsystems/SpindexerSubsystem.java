@@ -72,6 +72,7 @@ public class SpindexerSubsystem extends SubsystemBase {
     private double lastPositionTicks = 0.0;
     private long lastUpdateTimeMs = 0;
     private double lastError = 0.0;
+    private double lastOutputPower = 0.0;  // For acceleration limiting (soft-start)
     private int lastMovementDirection = 0;  // +1=CCW, -1=CW
     private boolean wasLimitPressed = false;
 
@@ -150,6 +151,13 @@ public class SpindexerSubsystem extends SubsystemBase {
 
         double output = (SpindexerConstants.kP * error) + (SpindexerConstants.kD * derivative);
         output = clamp(output, -SpindexerConstants.MAX_POWER, SpindexerConstants.MAX_POWER);
+        
+        // Apply acceleration limiting for soft start
+        long now = System.currentTimeMillis();
+        double deltaTimeSec = Math.max((now - lastUpdateTimeMs) / 1000.0, 0.001);
+        double maxPowerChange = SpindexerConstants.MAX_POWER_CHANGE_PER_SEC * deltaTimeSec;
+        output = clamp(output, lastOutputPower - maxPowerChange, lastOutputPower + maxPowerChange);
+        lastOutputPower = output;
 
         motor.setPower(output);
         
@@ -181,6 +189,7 @@ public class SpindexerSubsystem extends SubsystemBase {
         setTargetAngle(getIntakeAngle(slotIndex));
         currentSlotIndex = slotIndex;
         currentState = SpindexerState.MOVING;
+        lastOutputPower = 0.0;  // Reset for soft start
     }
 
     /**
@@ -192,6 +201,7 @@ public class SpindexerSubsystem extends SubsystemBase {
         setTargetAngle(getOuttakeAngle(slotIndex));
         currentSlotIndex = slotIndex;
         currentState = SpindexerState.MOVING;
+        lastOutputPower = 0.0;  // Reset for soft start
     }
 
     /**
