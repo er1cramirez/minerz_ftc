@@ -1,7 +1,8 @@
 repositories {
     mavenCentral()
     google() // Needed for androidx
-    maven { url 'https://repo.dairy.foundation/releases/' } // Pedro Pathing
+    maven { url 'https://repo.dairy.foundation/releases/' } // Pedro Pathing, NextFTC, Sloth
+    maven { url 'https://jitpack.io' }
 }
 
 dependencies {
@@ -18,5 +19,14 @@ dependencies {
     // Pedro Pathing
     implementation 'com.pedropathing:revhub:3.0.2'
     implementation 'com.pedropathing:tuning:1.0.0'
+
+    // Ivy: scheduler de comandos del ecosistema Pedro (NextFTC v2 corre sobre el)
+    implementation 'com.pedropathing.ivy:pedro:1.1.1'
+
+    // NextFTC v2 (robot arrastra hardware y control; se declaran para fijar versiones)
+    implementation 'dev.nextftc.v2:control:0.3.0'
+    implementation 'dev.nextftc.v2:hardware:0.3.0'
+    implementation 'dev.nextftc.v2:robot:0.3.0'
+    implementation 'dev.frozenmilk.sinister:Sloth:0.3.2'
 }
 
