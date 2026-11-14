@@ -15,8 +15,8 @@ plugins {
     // Note for FTC Teams: Do not modify this yourself.
     id 'com.android.application' version '8.13.2' apply false
     id 'com.android.library' version '8.13.2' apply false
-    // Kotlin para TeamCode (misma version de stdlib que usa NextFTC)
-    id 'org.jetbrains.kotlin.android' version '2.1.20' apply false
+    // Kotlin para TeamCode. Debe ser >= la version con la que se compilo Pedro (3.0.2 usa Kotlin 2.3.21)
+    id 'org.jetbrains.kotlin.android' version '2.3.21' apply false
 }
 
 // This is now required because aapt2 has to be downloaded from the
