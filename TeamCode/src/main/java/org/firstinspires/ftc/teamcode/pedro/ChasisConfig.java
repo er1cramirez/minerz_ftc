@@ -1,7 +1,6 @@
 package org.firstinspires.ftc.teamcode.pedro;
 
 import com.pedropathing.drivetrain.Drivetrain;
-import com.pedropathing.revhub.drivetrains.Mecanum;
 import com.pedropathing.revhub.drivetrains.MecanumConfig;
 import com.pedropathing.revhub.localizers.PinpointConfig;
 import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
@@ -9,12 +8,13 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.firstinspires.ftc.teamcode.chasis.SparkMiniMecanum;
 
 /**
  * Valores y hardware del chasis.
  *
- * En pedro-base este archivo solo tiene valores de ejemplo y NO se vuelve a modificar.
- * Cada rama de chasis (chasis-hub, chasis-spark, ...) lo edita con sus valores reales.
+ * Chasis SPARK: motores goBILDA conectados con REV SPARKmini (puertos de servo).
+ * Interruptor de cada SPARKmini en BRAKE. manualBrakeMode no aplica.
  *
  * Los tuners generan el código: pega SOLO el contenido de "c -> { ... }" en el bloque que corresponde.
  */
@@ -30,7 +30,6 @@ public class ChasisConfig {
         c.frontRightDirection.set(DcMotorSimple.Direction.FORWARD);
         c.backLeftDirection.set(DcMotorSimple.Direction.FORWARD);
         c.backRightDirection.set(DcMotorSimple.Direction.FORWARD);
-        c.manualBrakeMode.set(true);
     });
 
     // Resultado del Pinpoint Tuner
@@ -45,8 +44,8 @@ public class ChasisConfig {
         c.offsetUnits.set(DistanceUnit.INCH);
     });
 
-    // Tipo de drivetrain del chasis. Un chasis con otro hardware devuelve aquí su propia clase.
+    // Este chasis usa SPARKmini
     public static Drivetrain drivetrain(HardwareMap h) {
-        return new Mecanum(h, drivetrainConfig);
+        return new SparkMiniMecanum(h, drivetrainConfig);
     }
 }
