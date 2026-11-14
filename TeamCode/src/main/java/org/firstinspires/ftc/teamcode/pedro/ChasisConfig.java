@@ -18,7 +18,7 @@ import org.firstinspires.ftc.teamcode.chasis.SparkMiniMecanum;
  * Valores y hardware del chasis.
  *
  * Chasis SPARK: motores goBILDA conectados con REV SPARKmini (puertos de servo).
- * Interruptor de cada SPARKmini en BRAKE. manualBrakeMode no aplica.
+ * Interruptor de cada SPARKmini en COAST (ver TUNING.md). manualBrakeMode no aplica.
  *
  * Los tuners generan el código: pega SOLO el contenido de "c -> { ... }" en el bloque que corresponde.
  */

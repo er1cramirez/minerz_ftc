@@ -17,7 +17,8 @@ import java.util.Map;
  * pero con DcMotorSimple en lugar de DcMotorEx.
  *
  * Diferencias con el Mecanum normal:
- *  - El modo brake/coast NO se controla por software. Pon el interruptor de cada SPARKmini en BRAKE.
+ *  - El modo brake/coast NO se controla por software. Pon el interruptor de cada SPARKmini en COAST:
+ *    Pedro sigue trayectorias en coast y frena aplicando potencia (así mide el Foresight Tuner).
  *  - Por lo anterior, config.manualBrakeMode se ignora.
  *  - No hay lectura de corriente (currentAmps) porque el SPARKmini no la reporta.
  *
