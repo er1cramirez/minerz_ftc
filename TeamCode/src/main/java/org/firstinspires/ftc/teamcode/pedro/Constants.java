@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.pedro;
 
+import com.pedropathing.algorithm.Algorithm;
+import com.pedropathing.algorithm.Foresight;
 import com.pedropathing.drivetrain.Drivetrain;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.localization.Localizer;
@@ -21,9 +23,11 @@ public class Constants {
         return new PinpointLocalizer(h, ChasisConfig.localizerConfig);
     }
 
+    public static Algorithm algorithm() {
+        return new Foresight(ChasisConfig.foresightConfig);
+    }
+
     public static Follower create(HardwareMap h) {
-        // TODO: siguiente paso de tuning (algoritmo / Foresight)
-        // return new Follower(localizer(h), drivetrain(h), algoritmo);
-        return null;
+        return new Follower(localizer(h), drivetrain(h), algorithm());
     }
 }

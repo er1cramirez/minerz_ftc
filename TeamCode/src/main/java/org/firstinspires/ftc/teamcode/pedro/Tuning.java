@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.pedro;
 import com.pedropathing.tuning.autotune.Procedure;
 import com.pedropathing.tuning.autotune.Tuner;
 
+import org.firstinspires.ftc.teamcode.pedro.procedures.ForesightTuner;
 import org.firstinspires.ftc.teamcode.pedro.procedures.MecanumTuner;
 import org.firstinspires.ftc.teamcode.pedro.procedures.PinpointTuner;
 import org.firstinspires.ftc.teamcode.pedro.procedures.Tests;
@@ -23,10 +24,16 @@ public class Tuning {
         return new PinpointTuner();
     }
 
-    // Driving solo usa el drivetrain. Localization/Odometry usan también el Pinpoint.
-    // El algoritmo queda en null hasta el siguiente paso de tuning.
+    // Requiere Mecanum y Pinpoint ya tuneados en ChasisConfig
+    @Tuner
+    public static Procedure foresightTuner() {
+        return new ForesightTuner(Constants::localizer, Constants::drivetrain);
+    }
+
+    // Driving: solo drivetrain. Localization/Odometry: + Pinpoint.
+    // Hold/Line/Curve/Interpolation: + Foresight (requiere el Foresight Tuner).
     @Tuner
     public static Procedure tests() {
-        return new Tests(Constants::drivetrain, Constants::localizer, null);
+        return new Tests(Constants::drivetrain, Constants::localizer, Constants::algorithm);
     }
 }
