@@ -2,7 +2,7 @@ package org.firstinspires.ftc.teamcode.pedro.procedures;
 
 import com.pedropathing.tuning.autotune.*;
 import com.pedropathing.tuning.autotune.Display.FourWheelBot.Wheel;
-import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
 enum Direction {
     @DisplayName("Forward") FORWARD,
@@ -85,7 +85,8 @@ class SpinMotor extends TuningOpMode<Void> {
     @SuppressWarnings("StatementWithEmptyBody")
     @Override
     protected Void runTuningOpMode() {
-        DcMotor motor = hardwareMap.dcMotor.get(name);
+        // DcMotorSimple funciona tanto con motores del hub como con SPARKmini
+        DcMotorSimple motor = hardwareMap.get(DcMotorSimple.class, name);
         waitForStart();
         motor.setPower(0.5);
         while (opModeIsActive()) {
