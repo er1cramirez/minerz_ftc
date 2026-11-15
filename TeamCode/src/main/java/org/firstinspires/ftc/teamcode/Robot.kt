@@ -5,7 +5,11 @@ import dev.nextftc.hardware.RobotController
 import dev.nextftc.robot.Mechanism
 import dev.nextftc.robot.NextRobot
 import org.firstinspires.ftc.teamcode.mechanisms.Demo
+import org.firstinspires.ftc.teamcode.mechanisms.Feeder
 import org.firstinspires.ftc.teamcode.mechanisms.Flywheel
+import org.firstinspires.ftc.teamcode.mechanisms.Hood
+import org.firstinspires.ftc.teamcode.mechanisms.Intake
+import org.firstinspires.ftc.teamcode.mechanisms.Turret
 import org.firstinspires.ftc.teamcode.pedro.Constants
 
 /**
@@ -22,9 +26,15 @@ class Robot : NextRobot {
 
     val demo by lazy { Demo() }
     val flywheel by lazy { Flywheel("flywheel") }
+    val turret by lazy { Turret("turret", "turretHall") }
+    val hood by lazy { Hood("hood") }
+    val intake by lazy { Intake("intake") }
+    val feeder by lazy { Feeder("feeder") }
 
     // Solo los mechanisms listados reciben periodic() y su defaultCommand.
-    override val mechanisms: Set<Mechanism> by lazy { setOf(demo, flywheel) }
+    override val mechanisms: Set<Mechanism> by lazy {
+        setOf(demo, flywheel, turret, hood, intake, feeder)
+    }
 
     // Follower de Pedro, perezoso: no toca hardware hasta que un OpMode lo usa.
     private var _follower: Follower? = null
