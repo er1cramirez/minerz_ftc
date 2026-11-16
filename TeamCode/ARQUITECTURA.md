@@ -50,10 +50,13 @@ NextFTC v2 descubre `Robot` y los OpModes escaneando el classpath: no hay listas
 registro. Un OpMode es `@NextTeleop`/`@NextAutonomous` + subclase de `NextOpMode`
 que recibe `Robot` por constructor.
 
-## OpModes de verificación
+## OpModes de verificación y tuning
 
 - **Next Smoke Test**: sin hardware; valida Sloth + Ivy + NextFTC + Kotlin.
 - **Chasis TeleOp**: drive robot-centric con hold de pose; requiere tuning de Pedro.
+- **Main TeleOp**: 2 drivers; drive + flywheel/feeder/intake/torreta/hood.
+- **Tuners de mecanismos**: Flywheel Tuner, Turret Tuner, Hood Tuner, Intake-Feeder Tester.
+- **Vision Station**: tags + conversión FTC→Pedro + comparación vs Pinpoint; corre sin chasis.
 - **Tuners de Pedro**: registrados por `pedro/Tuning.java` (ver `TUNING.md`).
 
 ## Referencias
